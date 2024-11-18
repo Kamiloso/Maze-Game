@@ -391,6 +391,23 @@ char Map::get_tile_display(int x, int y)
     else return '=';
 }
 
+// Returns color ID of tile or -1 if it's obvious
+char Map::get_tile_color_modifier(int x, int y)
+{
+    if (x >= 0 && x < MAP_SIZE && y >= 0 && y < MAP_SIZE)
+    {
+        Tile& tile = tiles[x][y];
+        char ch = tile.id;
+        
+        if (ch == C::BULLET && tile.shot_by_player)
+            return 10;
+
+        if (tile.health > 0 && tile.dmg_show_time > 0)
+            return 4;
+    }
+    return -1;
+}
+
 // Spawns the object (unsafe to use without checking if empty space)
 void Map::spawn(int x, int y, char type, bool score_rich)
 {

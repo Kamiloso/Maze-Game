@@ -13,23 +13,33 @@ static void setColor(int textColor = 15, int backgroundColor = 0)
 
 static int tile_color(char c)
 {
+	/* Warning:
+	This function returns only default tile colors. They can be modified
+	by the color modifing method from class "Map". */
+
 	if (c >= '1' && c <= '9')
-		return 12;
+		return 8;
 
 	switch (c)
 	{
-		// Map objects, Entities
-		case C::BLOCK: return 14;
-		case C::PLAYER: return 9;
-		case C::ANIMAL: return 6;
-		case C::MONSTER: return 6;
-		case C::SNIPER: return 6;
-		case C::INSECTOR: return 11;
-		case C::INSECT: return 6;
-		case C::INSECT_DRIED: return 11;
-		case C::SPAWNER: return 10;
-		case C::BULLET: return 4;
+		// Special objects
+		case C::BLOCK: return 6;
+		case C::BULLET: return 4; // Can be modified by modifier!
+		case C::PLAYER: return 10;
 		case C::FRUIT: return 10;
+
+		// Neutrals
+		case C::ANIMAL:
+		case C::SPAWNER:
+			return 14;
+
+		// Enemies
+		case C::MONSTER:
+		case C::SNIPER:
+		case C::INSECTOR:
+		case C::INSECT:
+		case C::INSECT_DRIED:
+			return 12;
 
 		// Walls
 		case C::WALL:
@@ -43,7 +53,8 @@ static int tile_color(char c)
 		case C::WALL_NOT_E:
 		case C::WALL_NOT_S:
 		case C::WALL_NOT_W:
-			return 14;
+		case '=':
+			return 6;
 	
 		// Lines
 		case C::LINE_VERTICAL:
@@ -56,10 +67,10 @@ static int tile_color(char c)
 		case C::LINE_NOT_E:
 		case C::LINE_NOT_S:
 		case C::LINE_NOT_W:
-			return 14;
+			return 6;
 	
 		// Default case
-		default: return 14;
+		default: return 6;
 	}
 }
 
@@ -75,11 +86,15 @@ void display(Map* map, DisplayData ddt)
 	// Tile array declaration
 	const int DISP_SIZE = 2 * VISION_RANGE + 3;
 	char tiles[DISP_SIZE][DISP_SIZE];
+	int colors_mod[DISP_SIZE][DISP_SIZE];
 	int x1 = ddt.center.x - VISION_RANGE - 1;
 	int y1 = ddt.center.y - VISION_RANGE - 1;
 	for (int x = 0; x < DISP_SIZE; x++)
 		for (int y = 0; y < DISP_SIZE; y++)
+		{
 			tiles[x][y] = map->get_tile_display(x1 + x, y1 + y);
+			colors_mod[x][y] = map->get_tile_color_modifier(x1 + x, y1 + y);
+		}
 
 	// Pixel array declaration
 	const int ROWS = DISP_SIZE;
@@ -186,7 +201,14 @@ void display(Map* map, DisplayData ddt)
 		cout << " ";
 		for (int x = 0; x < COLUMNS; x++)
 		{
-			setColor(tile_color(pixels[x][y]));
+			int color_modifier = -1;
+			if(x % 2 == 0)
+				color_modifier = colors_mod[x / 2][y];
+
+			if (color_modifier == -1)
+				setColor(tile_color(pixels[x][y]));
+			else
+				setColor(color_modifier);
 			cout << pixels[x][y];
 		}
 		cout << endl;

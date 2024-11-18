@@ -48,5 +48,6 @@ public:
     unsigned int get_seed();
     char get_tile(int x, int y);
     char get_tile_display(int x, int y);
+    char get_tile_color_modifier(int x, int y);
 
 };

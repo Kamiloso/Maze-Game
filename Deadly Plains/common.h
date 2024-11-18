@@ -27,7 +27,7 @@ namespace C
     const char WALL = (char)0xCE;
     const char BLOCK = (char)0xFE;
     const char NUMBER = '9';
-    const char PLAYER = 'A';
+    const char PLAYER = 'P';
     const char ANIMAL = 'n';
     const char MONSTER = 'M';
     const char SNIPER = 'S';
