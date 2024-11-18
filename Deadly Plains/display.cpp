@@ -1,8 +1,67 @@
 #include <iostream>
 #include <iomanip>
+#include <windows.h>
 
 #include "map.h"
 #include "display.h"
+
+static void setColor(int textColor = 15, int backgroundColor = 0)
+{
+	HANDLE hConsole = GetStdHandle(STD_OUTPUT_HANDLE);
+	SetConsoleTextAttribute(hConsole, textColor + (backgroundColor << 4));
+}
+
+static int tile_color(char c)
+{
+	if (c >= '1' && c <= '9')
+		return 12;
+
+	switch (c)
+	{
+		// Map objects, Entities
+		case C::BLOCK: return 14;
+		case C::PLAYER: return 9;
+		case C::ANIMAL: return 6;
+		case C::MONSTER: return 6;
+		case C::SNIPER: return 6;
+		case C::INSECTOR: return 11;
+		case C::INSECT: return 6;
+		case C::INSECT_DRIED: return 11;
+		case C::SPAWNER: return 10;
+		case C::BULLET: return 4;
+		case C::FRUIT: return 10;
+
+		// Walls
+		case C::WALL:
+		case C::WALL_VERTICAL:
+		case C::WALL_HORIZONTAL:
+		case C::WALL_NE:
+		case C::WALL_NW:
+		case C::WALL_SE:
+		case C::WALL_SW:
+		case C::WALL_NOT_N:
+		case C::WALL_NOT_E:
+		case C::WALL_NOT_S:
+		case C::WALL_NOT_W:
+			return 14;
+	
+		// Lines
+		case C::LINE_VERTICAL:
+		case C::LINE_HORIZONTAL:
+		case C::LINE_NE:
+		case C::LINE_NW:
+		case C::LINE_SE:
+		case C::LINE_SW:
+		case C::LINE_NOT_N:
+		case C::LINE_NOT_E:
+		case C::LINE_NOT_S:
+		case C::LINE_NOT_W:
+			return 14;
+	
+		// Default case
+		default: return 14;
+	}
+}
 
 static bool is_wall_type(char c)
 {
@@ -127,8 +186,11 @@ void display(Map* map, DisplayData ddt)
 		cout << " ";
 		for (int x = 0; x < COLUMNS; x++)
 		{
+			setColor(tile_color(pixels[x][y]));
 			cout << pixels[x][y];
 		}
 		cout << endl;
 	}
+
+	setColor();
 }

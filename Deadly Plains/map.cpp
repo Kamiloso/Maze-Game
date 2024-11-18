@@ -62,7 +62,7 @@ Map::Map(unsigned int seed)
                 tiles[x][y] = Tile(C::FRUIT);
 
             // Animals
-            if (get_tile(x, y) == ' ' && ms_twister() % 1000 < 10)
+            if (get_tile(x, y) == ' ' && ms_twister() % 1000 < 15)
                 spawn(x, y, C::ANIMAL);
 
             // Monsters
@@ -81,8 +81,8 @@ Map::Map(unsigned int seed)
     if (get_tile(200, 205) == ' ')
         spawn(200, 205, C::INSECTOR);
 
-    if (get_tile(200, 195) == ' ')
-        spawn(200, 195, C::INSECTOR);
+    //if (get_tile(200, 195) == ' ')
+    //    spawn(200, 195, C::INSECTOR);
 }
 
 // Map destructor
@@ -111,9 +111,9 @@ void Map::frame_update()
         swap(entities[i], entities[j]);
     }
 
-    // Movement priority sorting: bullets > animals > [other]
+    // Movement priority sorting: bullets > monsters > [others]
     int i_ptr = 1;
-    for (char priority : {C::BULLET, C::ANIMAL})
+    for (char priority : {C::BULLET, C::MONSTER})
         for (int i = i_ptr; i < lngt; i++)
         {
             int lx = entities[i].x;
@@ -252,7 +252,7 @@ void Map::entity_move(int x, int y)
     // Animal
     if (entity.id == C::ANIMAL)
     {
-        static const int MOVEMENT_PERIOD = 8;
+        static const int MOVEMENT_PERIOD = 16;
 
         if (frame % MOVEMENT_PERIOD == 0)
             passive_movement(x, y);

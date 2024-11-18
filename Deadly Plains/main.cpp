@@ -1,6 +1,8 @@
 ﻿#include <iostream>
 #include <windows.h>
+#include <chrono>
 #include <conio.h>
+#include <sstream>
 
 #include "map.h"
 
@@ -14,18 +16,41 @@ void show_cursor() {
     cout << "\x1B[?25h";
 }
 
+void title_debug_info(string info) {
+    if (info != "")
+        info = "title Maze Game v.1.0 : " + info;
+    else
+        info = "title Maze Game v.1.0";
+    system(info.c_str());
+}
+
 void play(unsigned int seed = 0)
 {
     hide_cursor();
     Map* map = new Map(seed);
-    bool delay_on = false;
+    int next_frame_wait = 0;
     while (map->end() == -1)
     {
-        // Player Loop
-        if (delay_on) Sleep(FRAME_MS);
-        else delay_on = true;
+        // Game loop
+        Sleep(next_frame_wait);
+        
+        auto clock_before = chrono::steady_clock::now();
         map->frame_update();
+        auto clock_after = chrono::steady_clock::now();
+
+        auto milliseconds = std::chrono::duration_cast<std::chrono::milliseconds>(clock_after - clock_before).count();
+        next_frame_wait = FRAME_MS - static_cast<int>(milliseconds);
+        
+        if (next_frame_wait < 0)
+        {
+            stringstream ss;
+            ss << "We're " << (-next_frame_wait) << " ms behind!";
+            //title_debug_info(ss.str());
+            next_frame_wait = 0;
+        }
+        //else title_debug_info("");
     }
+    //title_debug_info("");
     int got_score = map->end();
     delete map;
 
@@ -43,8 +68,7 @@ void play(unsigned int seed = 0)
 int main()
 {
     // Program initialization
-    system("title Deadly Plains v.1.0");
-    system("color 0A");
+    title_debug_info("");
 
     // Play
     play();
