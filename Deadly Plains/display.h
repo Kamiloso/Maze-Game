@@ -12,4 +12,11 @@ struct DisplayData
 	int health = 0;
 };
 
+struct TileDisplay
+{
+	char character = ' ';
+	char color = COLOR::LIGHT_GRAY;
+};
+
 void display(Map* map, DisplayData ddt);
+void display_array(const TileDisplay pixels[DISPLAY_COLUMNS][DISPLAY_ROWS]);

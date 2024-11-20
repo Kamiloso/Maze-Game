@@ -18,6 +18,7 @@ struct Tile {
     int has_score = 0;
     int action_cooldown = 0;
     int dmg_show_time = 0;
+    bool dmg_show_from_dmg = false;
     bool should_reroll = true;
 
     // Bullet properties

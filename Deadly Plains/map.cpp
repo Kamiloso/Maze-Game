@@ -76,6 +76,12 @@ Map::Map(unsigned int seed)
             // Snipers
             if (get_tile(x, y) == ' ' && ms_twister() % 1000 < 3)
                 spawn(x, y, C::SNIPER);
+
+            // Numbers
+            if (get_tile(x, y) == ' ' && ms_twister() % 1000 < 15) {
+                tiles[x][y] = Tile(C::NUMBER);
+                tiles[x][y].health = ms_twister() % 4 + 1;
+            }
         }
 
     if (get_tile(200, 205) == ' ')
@@ -170,14 +176,14 @@ void Map::frame_update()
 }
 
 // Checks if game is over and if yes, returns score greater or equal 0
-int Map::end()
+int Map::end() const
 {
     if (entities.size() == 0 || get_tile(entities[0].x, entities[0].y) != C::PLAYER) return score;
     else return -1;
 }
 
 // Returns the map seed
-unsigned int Map::get_seed()
+unsigned int Map::get_seed() const
 {
     return public_seed;
 }
@@ -362,7 +368,7 @@ void Map::entity_move(int x, int y)
 }
 
 // Returns the character which represents object in the specific position
-char Map::get_tile(int x, int y)
+char Map::get_tile(int x, int y) const
 {
     if (x >= 0 && x < MAP_SIZE && y >= 0 && y < MAP_SIZE)
     {
@@ -372,40 +378,69 @@ char Map::get_tile(int x, int y)
     else return '=';
 }
 
-// Returns character which should be displayed in a specific map position
-char Map::get_tile_display(int x, int y)
+// Returns character and color ID, which will be displayed as a tile
+TileDisplay Map::get_tile_display(int x, int y) const
 {
     if (x >= 0 && x < MAP_SIZE && y >= 0 && y < MAP_SIZE)
     {
         Tile& tile = tiles[x][y];
         char ch = tile.id;
-        if (ch == C::NUMBER || tile.dmg_show_time > 0)
-            if (tile.health > 0 && tile.health <= 9)
-                return '0' + tile.health;
+
+        if (ch == ' ')
+            return { ' ', COLOR::DARK_GRAY };
+
+        if (ch == C::NUMBER)
+        {
+            if (tile.health >= 0 && tile.health <= 9)
+            {
+                char new_ch = '0' + tile.health;
+                return { new_ch, COLOR::DARK_GRAY };
+            }
+            else return { '9', COLOR::DARK_GRAY };
+        }
+
+        if (tile.health >= 0 && tile.health <= 9 && tile.dmg_show_time > 0)
+        {
+            char new_ch = '0' + tile.health;
+            if (tile.dmg_show_from_dmg)
+                return { new_ch, COLOR::DARK_RED };
+            else
+                return { new_ch, COLOR::BLUE };
+        }
+
+        if (ch == C::BULLET)
+        {
+            if (tile.shot_by_player)
+                return { ch, COLOR::DARK_GREEN };
+            else
+                return { ch, COLOR::DARK_RED };
+        }
 
         if (ch == C::INSECT && tile.has_score == 0)
-            return C::INSECT_DRIED;
+            ch = C::INSECT_DRIED;
 
-        return ch;
+        if (ch == C::WALL ||
+            ch == C::BLOCK)
+            return { ch, COLOR::DARK_GRAY };
+
+        if (ch == C::PLAYER)
+            return { ch, COLOR::GREEN };
+
+        if (ch == C::ANIMAL ||
+            ch == C::SPAWNER)
+            return { ch, COLOR::YELLOW };
+
+        if (ch == C::FRUIT)
+            return { ch, COLOR::BLUE };
+
+        if (ch == C::MONSTER ||
+            ch == C::SNIPER ||
+            ch == C::INSECTOR ||
+            ch == C::INSECT ||
+            ch == C::INSECT_DRIED)
+            return { ch, COLOR::RED };
     }
-    else return '=';
-}
-
-// Returns color ID of tile or -1 if it's obvious
-char Map::get_tile_color_modifier(int x, int y)
-{
-    if (x >= 0 && x < MAP_SIZE && y >= 0 && y < MAP_SIZE)
-    {
-        Tile& tile = tiles[x][y];
-        char ch = tile.id;
-        
-        if (ch == C::BULLET && tile.shot_by_player)
-            return 10;
-
-        if (tile.health > 0 && tile.dmg_show_time > 0)
-            return 4;
-    }
-    return -1;
+    else return { '=', COLOR::DARK_GRAY };
 }
 
 // Spawns the object (unsafe to use without checking if empty space)
@@ -473,7 +508,11 @@ bool Map::damage(int x, int y, bool dmg_by_player)
     }
     else
     {
-        tile.dmg_show_time = DAMAGE_SHOW_TIME;
+        if (tile.id != C::NUMBER)
+        {
+            tile.dmg_show_time = DAMAGE_SHOW_TIME;
+            tile.dmg_show_from_dmg = true;
+        }
         return false;
     }
 }
@@ -491,11 +530,6 @@ bool Map::try_move(int x, int y, int dx, int dy, string mode)
         bool bullets_ignore_tag = false;
         if (mode == "bullets_ignore" && get_tile(x + dx, y + dy) == C::BULLET)
             bullets_ignore_tag = true;
-        /*{
-            bool axis_go_x = (dx != 0);
-            bool axis_bl_x = (tiles[x + dx][y + dy].movement.x != 0);
-            bullets_ignore_tag = (axis_go_x == axis_bl_x); // ignore bullet only if on the same axis as movement
-        }*/
 
         if ((mode == "push" && can_be_picked_up(get_tile(x + dx, y + dy))) || bullets_ignore_tag)
             picking_up = get_tile(x + dx, y + dy);
@@ -512,12 +546,12 @@ bool Map::try_move(int x, int y, int dx, int dy, string mode)
         if (picking_up == C::FRUIT)
         {
             if (tiles[x][y].health < MAX_PLAYER_HEALTH)
-            {
                 tiles[x][y].health++;
-                tiles[x][y].dmg_show_time = DAMAGE_SHOW_TIME;
-            }
             else
                 score += OVERFRUIT_EAT_SCORE;
+
+            tiles[x][y].dmg_show_time = DAMAGE_SHOW_TIME;
+            tiles[x][y].dmg_show_from_dmg = false;
         }
     }
 

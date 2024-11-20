@@ -19,6 +19,9 @@ const int LAB_ARRAY_SIZE = SECTORS_IN_LINE * 2 - 1;             // Labirynth ins
 const int TOTAL_SECTORS = SECTORS_IN_LINE * SECTORS_IN_LINE;    // Total sectors on the whole map
 const int SIMULATION_DISTANCE = VISION_RANGE * 2;               // Distance in which entity behaviour is simulated (has a square shape)
 const int PATHFIND_TABLE_SIZE = 2 * SIMULATION_DISTANCE + 1;    // Size of the array used for pathfinding
+const int DISP_SIZE = 2 * VISION_RANGE + 3;                     // Size of display-array-1
+const int DISPLAY_ROWS = DISP_SIZE;                             // Amount of display-array-2 rows
+const int DISPLAY_COLUMNS = DISP_SIZE * 2 - 1;                  // Amount of display-array-2 columns
 
 // Common characters
 namespace C
@@ -61,6 +64,28 @@ namespace C
     const char LINE_NOT_S = (char)0xC1;
     const char LINE_NOT_W = (char)0xC3;
 }
+
+// Console color IDs
+namespace COLOR
+{
+    const char BLACK = 0;
+    const char DARK_BLUE = 1;
+    const char DARK_GREEN = 2;
+    const char DARK_CYAN = 3;
+    const char DARK_RED = 4;
+    const char DARK_MAGENTA = 5;
+    const char DARK_YELLOW = 6;
+    const char LIGHT_GRAY = 7;
+    const char DARK_GRAY = 8;
+    const char BLUE = 9;
+    const char GREEN = 10;
+    const char CYAN = 11;
+    const char RED = 12;
+    const char MAGENTA = 13;
+    const char YELLOW = 14;
+    const char WHITE = 15;
+}
+
 
 // --- STRUCTS ---
 

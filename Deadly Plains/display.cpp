@@ -1,77 +1,17 @@
 #include <iostream>
 #include <iomanip>
 #include <windows.h>
+#include <sstream>
 
 #include "map.h"
 #include "display.h"
 
-static void setColor(int textColor = 15, int backgroundColor = 0)
+using namespace std;
+
+static void set_color(int text_color = 15, int bg_color = 0)
 {
 	HANDLE hConsole = GetStdHandle(STD_OUTPUT_HANDLE);
-	SetConsoleTextAttribute(hConsole, textColor + (backgroundColor << 4));
-}
-
-static int tile_color(char c)
-{
-	/* Warning:
-	This function returns only default tile colors. They can be modified
-	by the color modifing method from class "Map". */
-
-	if (c >= '1' && c <= '9')
-		return 8;
-
-	switch (c)
-	{
-		// Special objects
-		case C::BLOCK: return 6;
-		case C::BULLET: return 4; // Can be modified by modifier!
-		case C::PLAYER: return 10;
-		case C::FRUIT: return 10;
-
-		// Neutrals
-		case C::ANIMAL:
-		case C::SPAWNER:
-			return 14;
-
-		// Enemies
-		case C::MONSTER:
-		case C::SNIPER:
-		case C::INSECTOR:
-		case C::INSECT:
-		case C::INSECT_DRIED:
-			return 12;
-
-		// Walls
-		case C::WALL:
-		case C::WALL_VERTICAL:
-		case C::WALL_HORIZONTAL:
-		case C::WALL_NE:
-		case C::WALL_NW:
-		case C::WALL_SE:
-		case C::WALL_SW:
-		case C::WALL_NOT_N:
-		case C::WALL_NOT_E:
-		case C::WALL_NOT_S:
-		case C::WALL_NOT_W:
-		case '=':
-			return 6;
-	
-		// Lines
-		case C::LINE_VERTICAL:
-		case C::LINE_HORIZONTAL:
-		case C::LINE_NE:
-		case C::LINE_NW:
-		case C::LINE_SE:
-		case C::LINE_SW:
-		case C::LINE_NOT_N:
-		case C::LINE_NOT_E:
-		case C::LINE_NOT_S:
-		case C::LINE_NOT_W:
-			return 6;
-	
-		// Default case
-		default: return 6;
-	}
+	SetConsoleTextAttribute(hConsole, text_color + (bg_color << 4));
 }
 
 static bool is_wall_type(char c)
@@ -84,25 +24,22 @@ static bool is_wall_type(char c)
 void display(Map* map, DisplayData ddt)
 {
 	// Tile array declaration
-	const int DISP_SIZE = 2 * VISION_RANGE + 3;
-	char tiles[DISP_SIZE][DISP_SIZE];
-	int colors_mod[DISP_SIZE][DISP_SIZE];
+	TileDisplay tiles[DISP_SIZE][DISP_SIZE];
 	int x1 = ddt.center.x - VISION_RANGE - 1;
 	int y1 = ddt.center.y - VISION_RANGE - 1;
 	for (int x = 0; x < DISP_SIZE; x++)
 		for (int y = 0; y < DISP_SIZE; y++)
 		{
 			tiles[x][y] = map->get_tile_display(x1 + x, y1 + y);
-			colors_mod[x][y] = map->get_tile_color_modifier(x1 + x, y1 + y);
 		}
 
 	// Pixel array declaration
-	const int ROWS = DISP_SIZE;
-	const int COLUMNS = DISP_SIZE * 2 - 1;
-	char pixels[COLUMNS][ROWS];
+	const int ROWS = DISPLAY_ROWS;
+	const int COLUMNS = DISPLAY_COLUMNS;
+	TileDisplay pixels[COLUMNS][ROWS];
 	for (int x = 0; x < COLUMNS; x++)
 		for (int y = 0; y < ROWS; y++)
-			pixels[x][y] = ' ';
+			pixels[x][y] = { ' ',COLOR::DARK_GRAY };
 
 	// Tile into pixels data transfer
 	for (int x = 0; x < DISP_SIZE; x++)
@@ -115,44 +52,47 @@ void display(Map* map, DisplayData ddt)
 		{
 			if (x % 2 == 0) // tile exists
 			{
-				if (!is_wall_type(pixels[x][y]))
+				if (!is_wall_type(pixels[x][y].character))
 					continue;
 
-				bool north = is_wall_type(pixels[x][y + 1]);
-				bool south = is_wall_type(pixels[x][y - 1]);
-				bool east = is_wall_type(pixels[x + 2][y]);
-				bool west = is_wall_type(pixels[x - 2][y]);
+				bool north = is_wall_type(pixels[x][y + 1].character);
+				bool south = is_wall_type(pixels[x][y - 1].character);
+				bool east = is_wall_type(pixels[x + 2][y].character);
+				bool west = is_wall_type(pixels[x - 2][y].character);
 				
 				// line
 				if ((north || south) && !east && !west)
-					pixels[x][y] = C::WALL_VERTICAL;
+					pixels[x][y].character = C::WALL_VERTICAL;
 				if (!north && !south && (east || west))
-					pixels[x][y] = C::WALL_HORIZONTAL;
+					pixels[x][y].character = C::WALL_HORIZONTAL;
 
 				// corner
 				if (north && !south && east && !west)
-					pixels[x][y] = C::WALL_NE;
+					pixels[x][y].character = C::WALL_NE;
 				if (north && !south && !east && west)
-					pixels[x][y] = C::WALL_NW;
+					pixels[x][y].character = C::WALL_NW;
 				if (!north && south && east && !west)
-					pixels[x][y] = C::WALL_SE;
+					pixels[x][y].character = C::WALL_SE;
 				if (!north && south && !east && west)
-					pixels[x][y] = C::WALL_SW;
+					pixels[x][y].character = C::WALL_SW;
 
 				// triple
 				if (!north && south && east && west)
-					pixels[x][y] = C::WALL_NOT_N;
+					pixels[x][y].character = C::WALL_NOT_N;
 				if (north && !south && east && west)
-					pixels[x][y] = C::WALL_NOT_S;
+					pixels[x][y].character = C::WALL_NOT_S;
 				if (north && south && !east && west)
-					pixels[x][y] = C::WALL_NOT_E;
+					pixels[x][y].character = C::WALL_NOT_E;
 				if (north && south && east && !west)
-					pixels[x][y] = C::WALL_NOT_W;
+					pixels[x][y].character = C::WALL_NOT_W;
 			}
 			else // empty column
 			{
-				if (is_wall_type(pixels[x - 1][y]) && is_wall_type(pixels[x + 1][y]))
-					pixels[x][y] = C::WALL_HORIZONTAL;
+				if (is_wall_type(pixels[x - 1][y].character) && is_wall_type(pixels[x + 1][y].character))
+				{
+					pixels[x][y].character = C::WALL_HORIZONTAL;
+					pixels[x][y].color = pixels[x - 1][y].color; // copy color from neighbour
+				}
 			}
 		}
 
@@ -162,19 +102,23 @@ void display(Map* map, DisplayData ddt)
 		{
 			// lines
 			if (x == 0 || x == COLUMNS - 1)
-				pixels[x][y] = C::LINE_VERTICAL;
+				pixels[x][y].character = C::LINE_VERTICAL;
 			if (y == 0 || y == ROWS - 1)
-				pixels[x][y] = C::LINE_HORIZONTAL;
+				pixels[x][y].character = C::LINE_HORIZONTAL;
 
 			// corners
 			if (x == 0 && y == 0)
-				pixels[x][y] = C::LINE_NE;
+				pixels[x][y].character = C::LINE_NE;
 			if (x == COLUMNS - 1 && y == 0)
-				pixels[x][y] = C::LINE_NW;
+				pixels[x][y].character = C::LINE_NW;
 			if (x == 0 && y == ROWS - 1)
-				pixels[x][y] = C::LINE_SE;
+				pixels[x][y].character = C::LINE_SE;
 			if (x == COLUMNS - 1 && y == ROWS - 1)
-				pixels[x][y] = C::LINE_SW;
+				pixels[x][y].character = C::LINE_SW;
+
+			// color set on borders
+			if (x == 0 || x == COLUMNS - 1 || y == 0 || y == ROWS - 1)
+				pixels[x][y].color = COLOR::LIGHT_GRAY;
 		}
 
 	// Final map display
@@ -196,23 +140,30 @@ void display(Map* map, DisplayData ddt)
 	cout << " Score: " << ddt.score << " | ";
 	cout << " Health: " << ddt.health << " |" << endl;
 
-	for (int y = ROWS - 1; y >= 0; y--)
+	display_array(pixels);
+}
+
+void display_array(const TileDisplay pixels[DISPLAY_COLUMNS][DISPLAY_ROWS])
+{
+	char last_color = 255; // Set to something, which is never used
+
+	for (int y = DISPLAY_ROWS - 1; y >= 0; y--)
 	{
 		cout << " ";
-		for (int x = 0; x < COLUMNS; x++)
+		for (int x = 0; x < DISPLAY_COLUMNS; x++)
 		{
-			int color_modifier = -1;
-			if(x % 2 == 0)
-				color_modifier = colors_mod[x / 2][y];
+			// Change color if differs
+			char current_color = pixels[x][y].color;
+			if (last_color != current_color)
+			{
+				set_color(current_color);
+				last_color = current_color;
+			}
 
-			if (color_modifier == -1)
-				setColor(tile_color(pixels[x][y]));
-			else
-				setColor(color_modifier);
-			cout << pixels[x][y];
+			// Display pixel
+			cout << pixels[x][y].character;
 		}
-		cout << endl;
+		cout << "\n";
 	}
-
-	setColor();
+	set_color();
 }

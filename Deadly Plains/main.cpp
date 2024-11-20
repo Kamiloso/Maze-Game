@@ -18,7 +18,7 @@ void show_cursor() {
 
 void title_debug_info(string info) {
     if (info != "")
-        info = "title Maze Game v.1.0 : " + info;
+        info = "title Maze Game v.1.0 ; " + info;
     else
         info = "title Maze Game v.1.0";
     system(info.c_str());
@@ -44,13 +44,13 @@ void play(unsigned int seed = 0)
         if (next_frame_wait < 0)
         {
             stringstream ss;
-            ss << "We're " << (-next_frame_wait) << " ms behind!";
-            //title_debug_info(ss.str());
+            ss << "The game is " << (-next_frame_wait) << " ms behind!";
+            title_debug_info(ss.str());
             next_frame_wait = 0;
         }
-        //else title_debug_info("");
+        else title_debug_info("");
     }
-    //title_debug_info("");
+    title_debug_info("");
     int got_score = map->end();
     delete map;
 
@@ -69,6 +69,7 @@ int main()
 {
     // Program initialization
     title_debug_info("");
+    std::ios::sync_with_stdio(false); // removes compatibility with printf() from C, be careful and only use cout!
 
     // Play
     play();

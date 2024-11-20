@@ -7,6 +7,7 @@
 #include "common.h"
 
 struct DisplayData;
+struct TileDisplay;
 struct Tile;
 
 using namespace std;
@@ -42,12 +43,11 @@ public:
 
     // Public methods
     void frame_update();
-    int end();
+    int end() const;
 
     // Read-only public methods
-    unsigned int get_seed();
-    char get_tile(int x, int y);
-    char get_tile_display(int x, int y);
-    char get_tile_color_modifier(int x, int y);
+    unsigned int get_seed() const;
+    char get_tile(int x, int y) const;
+    TileDisplay get_tile_display(int x, int y) const;
 
 };

@@ -63,6 +63,11 @@ Tile::Tile(char _id)
 		health = 1;
 		has_score = 0;
 	}
+
+	// Number
+	if (id == C::NUMBER) {
+		health = 9;
+	}
 }
 
 static Coords directions[4] = {
