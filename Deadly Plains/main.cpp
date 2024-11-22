@@ -8,11 +8,11 @@
 
 using namespace std;
 
-void hide_cursor() {
+static void hide_cursor() {
     cout << "\x1B[?25l";
 }
 
-void show_cursor() {
+static void show_cursor() {
     cout << "\x1B[?25h";
 }
 

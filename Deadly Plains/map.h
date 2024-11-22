@@ -5,6 +5,7 @@
 #include <random>
 
 #include "common.h"
+#include "pathfinding.h"
 
 struct DisplayData;
 struct TileDisplay;
@@ -19,6 +20,7 @@ private:
     Tile** tiles;
     vector<Coords> entities;
     std::mt19937 ms_twister;
+    Pathfinding pathfinding;
 
     // Private properties
     unsigned int public_seed = 0;

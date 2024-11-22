@@ -6,6 +6,7 @@
 #include "input.h"
 #include "display.h"
 #include "entities.h"
+#include "pathfinding.h"
 
 using namespace std;
 
@@ -139,9 +140,14 @@ void Map::frame_update()
             static const int PLAYER_SMELL = 20;
             static const int ANIMAL_SMELL = 15;
 
-            draw_pathmap(this, entities[0], { { C::PLAYER, PLAYER_SMELL } }, "melee");
-            draw_pathmap(this, entities[0], { { C::PLAYER, PLAYER_SMELL }, { C::ANIMAL, ANIMAL_SMELL } }, "predator");
-            draw_pathmap(this, entities[0], { { C::PLAYER, PLAYER_SMELL } }, "distance");
+            pathfinding.draw_pathmap(this, entities[0], { 
+                { C::PLAYER, PLAYER_SMELL } }, "melee");
+
+            pathfinding.draw_pathmap(this, entities[0], { 
+                { C::PLAYER, PLAYER_SMELL }, { C::ANIMAL, ANIMAL_SMELL } }, "predator");
+
+            pathfinding.draw_pathmap(this, entities[0], { 
+                { C::PLAYER, PLAYER_SMELL } }, "distance");
         }
 
         if (entities[i].x != MAP_SIZE)
@@ -276,9 +282,9 @@ void Map::entity_move(int x, int y)
             // Decide where to go
             Coords feels_path;
             if(entity.id == C::MONSTER)
-                feels_path = pathfind(this, entities[0], {x,y}, ms_twister, "predator");
+                feels_path = pathfinding.pathfind(this, entities[0], {x,y}, ms_twister, "predator");
             else
-                feels_path = pathfind(this, entities[0], { x,y }, ms_twister, "melee");
+                feels_path = pathfinding.pathfind(this, entities[0], { x,y }, ms_twister, "melee");
 
             // Go where it has been decided
             if (feels_path.x == 0 && feels_path.y == 0)
@@ -329,7 +335,7 @@ void Map::entity_move(int x, int y)
         if (frame % MOVEMENT_PERIOD == 0)
         {
             // Only for checking if can see the player
-            Coords feels_path = pathfind(this, entities[0], { x,y }, ms_twister, "melee");
+            Coords feels_path = pathfinding.pathfind(this, entities[0], { x,y }, ms_twister, "melee");
 
             // Reloading (even if doesn't see the player)
             if (entity.action_cooldown > 0)
