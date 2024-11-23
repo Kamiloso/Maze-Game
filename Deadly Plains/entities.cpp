@@ -3,81 +3,11 @@
 #include "entities.h"
 #include "common.h"
 
-Tile::Tile(char _id)
-{
-	id = _id;
-
-	// Player
-	if (id == C::PLAYER) {
-		health = MAX_PLAYER_HEALTH;
-		has_score = 0;
-	}
-
-	// Animal
-	if (id == C::ANIMAL) {
-		health = 1;
-		has_score = 2;
-	}
-
-	// Monster
-	if (id == C::MONSTER) {
-		health = 5;
-		has_score = 6;
-	}
-
-	// Sniper
-	if (id == C::SNIPER) {
-		health = 3;
-		has_score = 8;
-	}
-
-	// Insector
-	if (id == C::INSECTOR) {
-		health = 10;
-		has_score = 20;
-	}
-
-	// Insect
-	if (id == C::INSECT) {
-		health = 1;
-		has_score = 3;
-	}
-
-	// Spawner
-	if (id == C::SPAWNER) {
-		
-	}
-
-	// Bullet
-	if (id == C::BULLET) {
-		health = 1;
-		has_score = 0;
-	}
-
-	// Fruit
-	if (id == C::FRUIT) {
-		health = 1;
-		has_score = 0;
-	}
-
-	// Number
-	if (id == C::NUMBER) {
-		health = 9;
-	}
-}
-
 // Default constructor
-Tile2::Tile2(char _id, Coords bul_vect, bool by_player)
+Tile::Tile(char _id, Coords bul_vect, bool by_player)
 {
 	if (_id == ' ') return;
-
-	bool dry = false;
 	id = _id;
-	if (id == C::INSECT_DRIED)
-	{
-		id = C::INSECT;
-		dry = true;
-	}
 
 	if (id == C::BULLET)
 	{
@@ -87,28 +17,11 @@ Tile2::Tile2(char _id, Coords bul_vect, bool by_player)
 		else if (bul_vect == Coords{ -1,0 }) bullet_movement = 'W';
 		shot_by_player = by_player;
 	}
-	initialize_tile_values(dry);
-}
-
-// Hard set health constructor
-Tile2::Tile2(char _id, char hard_set_health)
-{
-	if (_id == ' ') return;
-
-	bool dry = false;
-	id = _id;
-	if (id == C::INSECT_DRIED)
-	{
-		id = C::INSECT;
-		dry = true;
-	}
-
-	initialize_tile_values(dry);
-	health = hard_set_health;
+	initialize_tile_values();
 }
 
 // Initializes default tile values depending on their type
-void Tile2::initialize_tile_values(bool dry)
+void Tile::initialize_tile_values()
 {
 	switch (id)
 	{
@@ -122,17 +35,17 @@ void Tile2::initialize_tile_values(bool dry)
 		break;
 
 	case C::MONSTER:
-		health = 1;
+		health = 5;
 		reward_score = 6;
 		break;
 
 	case C::SNIPER:
-		health = 1;
+		health = 3;
 		reward_score = 8;
 		break;
 
 	case C::INSECTOR:
-		health = 1;
+		health = 10;
 		reward_score = 20;
 		break;
 
@@ -142,7 +55,7 @@ void Tile2::initialize_tile_values(bool dry)
 		break;
 
 	case C::SPAWNER:
-		health = 1;
+		health = 10;
 		reward_score = 20;
 		break;
 
@@ -158,30 +71,52 @@ void Tile2::initialize_tile_values(bool dry)
 		health = 4;
 		break;
 	}
+}
 
-	if (dry)
-		reward_score = 0;
+// Health setter
+void Tile::set_health(char value)
+{
+	health = value;
+}
+
+// Score setter
+void Tile::set_score(char value)
+{
+	if (value >= 0)
+		reward_score = value;
+}
+
+// ID getter
+char Tile::get_id() const
+{
+	return id;
 }
 
 // Health getter
-char Tile2::get_health() const
+char Tile::get_health() const
 {
 	return health;
 }
 
-// Stored score getter
-char Tile2::get_score() const
+// Score getter
+char Tile::get_score() const
 {
 	return reward_score;
 }
 
+// Check if was shot by player
+bool Tile::was_shot_by_player() const
+{
+	return shot_by_player;
+}
+
 // Heals entity by one hp and returns whether it was healed
-bool Tile2::heal_by_one(char max_health)
+bool Tile::heal_by_one(char max_health)
 {
 	dmg_show_time = DAMAGE_SHOW_TIME;
 	dmg_show_from_dmg = false;
 
-	if (health + 1 != max_health)
+	if (health != max_health)
 	{
 		health++;
 		return true;
@@ -190,7 +125,7 @@ bool Tile2::heal_by_one(char max_health)
 }
 
 // Damages entity by one hp and returns whether health has decremented to 0
-bool Tile2::damage_by_one()
+bool Tile::damage_by_one()
 {
 	if (health == -1) return false;
 
@@ -202,33 +137,44 @@ bool Tile2::damage_by_one()
 }
 
 // Mark tile as acted temporarily
-void Tile2::mark_as_acted(char cooldown)
+void Tile::mark_as_acted(char cooldown)
 {
 	action_cooldown = cooldown;
 }
 
 // Checks if can act now
-bool Tile2::can_act_now() const
+bool Tile::can_act_now() const
 {
 	return action_cooldown == 0;
 }
 
+// Checks if can act now
+unsigned char Tile::is_dmg_visible() const
+{
+	if (dmg_show_time == 0)
+		return 0; // invisible
+	else if (dmg_show_from_dmg)
+		return 1; // visible red
+	else
+		return 2; // visible green
+}
+
 // Decrements action_cooldown if possible
-void Tile2::action_decrement()
+void Tile::action_decrement()
 {
 	if (action_cooldown != 0)
 		action_cooldown--;
 }
 
 // Decrements dmg_show_time if possible
-void Tile2::dmg_show_decrement()
+void Tile::dmg_show_decrement()
 {
 	if (dmg_show_time != 0)
 		dmg_show_time--;
 }
 
 // Checks if this function is called the first time
-bool Tile2::check_initialization()
+bool Tile::check_initialization()
 {
 	if (initialization_flag)
 	{
@@ -239,11 +185,16 @@ bool Tile2::check_initialization()
 }
 
 // Returns bullet movement coordinates
-Coords Tile2::get_bullet_movement() const
+Coords Tile::get_bullet_movement() const
 {
 	if (bullet_movement == 'N') return { 0,1 };
 	if (bullet_movement == 'E') return { 1,0 };
 	if (bullet_movement == 'S') return { 0,-1 };
 	if (bullet_movement == 'W') return { -1,0 };
 	return { 0,0 };
+}
+
+void Tile::execute_behaviour()
+{
+	;
 }

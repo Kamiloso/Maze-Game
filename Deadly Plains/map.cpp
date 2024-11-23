@@ -81,7 +81,7 @@ Map::Map(unsigned int seed)
             // Numbers
             if (get_tile(x, y) == ' ' && ms_twister() % 1000 < 15) {
                 tiles[x][y] = Tile(C::NUMBER);
-                tiles[x][y].health = ms_twister() % 4 + 1;
+                tiles[x][y].set_health(ms_twister() % 4 + 1);
             }
         }
 
@@ -152,8 +152,7 @@ void Map::frame_update()
 
         if (entities[i].x != MAP_SIZE)
         {
-            if (tiles[entities[i].x][entities[i].y].dmg_show_time > 0)
-                tiles[entities[i].x][entities[i].y].dmg_show_time--;
+            tiles[entities[i].x][entities[i].y].dmg_show_decrement();
             entity_move(entities[i].x, entities[i].y);
         }
     }
@@ -174,7 +173,7 @@ void Map::frame_update()
     ddt.center = entities[0];
     ddt.difficulty = (int)entities.size();
     ddt.score = score;
-    ddt.health = tiles[entities[0].x][entities[0].y].health;
+    ddt.health = tiles[entities[0].x][entities[0].y].get_health();
     display(this, ddt);
 
     // Frame number increase
@@ -222,25 +221,29 @@ void Map::entity_move(int x, int y)
     Tile& entity = tiles[x][y];
 
     // Disable distant entities
-    int distance_x = x - entities[0].x;
-    int distance_y = y - entities[0].y;
-    if (distance_x < 0) distance_x *= -1;
-    if (distance_y < 0) distance_y *= -1;
-    if (distance_x > SIMULATION_DISTANCE || distance_y > SIMULATION_DISTANCE)
+    int dist_x = x - entities[0].x;
+    int dist_y = y - entities[0].y;
+    if (dist_x < 0) dist_x *= -1;
+    if (dist_y < 0) dist_y *= -1;
+    if (dist_x > SIMULATION_DISTANCE || dist_y > SIMULATION_DISTANCE)
         return;
+
+    // Execute entity behaviour
+    entity.execute_behaviour();
 
     // ---------------------- //
 
+    char entity_id = entity.get_id();
+
     // Player
-    if (entity.id == C::PLAYER)
+    if (entity_id == C::PLAYER)
     {
         static const int MOVEMENT_PERIOD = 2; // amount of frames
         static const int ACTION_COOLDOWN = 2; // amount of MOVEMENT_PERIOD periods
 
         if (frame % MOVEMENT_PERIOD == 0)
         {
-            if (entity.action_cooldown > 0)
-                entity.action_cooldown--;
+            entity.action_decrement();
 
             if (!is_space_pressed())
             {
@@ -248,13 +251,13 @@ void Map::entity_move(int x, int y)
                 Coords mov_input = get_movement_input();
                 try_move(x, y, mov_input.x, mov_input.y, "push");
             }
-            else if (entity.action_cooldown == 0)
+            else if (entity.can_act_now())
             {
                 // shooting mode
                 Coords shoot_input = get_shooting_input();
                 if (shoot_input.x != 0 || shoot_input.y != 0)
                 {
-                    entity.action_cooldown = ACTION_COOLDOWN;
+                    entity.mark_as_acted(ACTION_COOLDOWN);
                     spawn_bullet(x, y, shoot_input.x, shoot_input.y, true);
                 }
             }
@@ -262,7 +265,7 @@ void Map::entity_move(int x, int y)
     }
 
     // Animal
-    if (entity.id == C::ANIMAL)
+    if (entity_id == C::ANIMAL)
     {
         static const int MOVEMENT_PERIOD = 16;
 
@@ -271,9 +274,9 @@ void Map::entity_move(int x, int y)
     }
 
     // Monster / Insect
-    if (entity.id == C::MONSTER || entity.id == C::INSECT)
+    if (entity_id == C::MONSTER || entity_id == C::INSECT)
     {
-        int movement_period = entity.id == C::MONSTER ? 8 : 4;
+        int movement_period = entity_id == C::MONSTER ? 8 : 4;
         static const int DAMAGE_PERIOD = 8;
         static const int PLAYER_SMELL = 15;
 
@@ -281,7 +284,7 @@ void Map::entity_move(int x, int y)
         {
             // Decide where to go
             Coords feels_path;
-            if(entity.id == C::MONSTER)
+            if(entity_id == C::MONSTER)
                 feels_path = pathfinding.pathfind(entities[0], {x,y}, ms_twister, "predator");
             else
                 feels_path = pathfinding.pathfind(entities[0], { x,y }, ms_twister, "melee");
@@ -296,7 +299,7 @@ void Map::entity_move(int x, int y)
                 if (!try_move(x, y, feels_path.x, feels_path.y, "bullets_ignore") && frame % DAMAGE_PERIOD == 0)
                 {
                     char tile_attack = get_tile(x + feels_path.x, y + feels_path.y);
-                    if (tile_attack == C::PLAYER || (tile_attack == C::ANIMAL && entity.id == C::MONSTER))
+                    if (tile_attack == C::PLAYER || (tile_attack == C::ANIMAL && entity_id == C::MONSTER))
                         damage(x + feels_path.x, y + feels_path.y);
                 }
             }
@@ -304,7 +307,7 @@ void Map::entity_move(int x, int y)
     }
 
     // Sniper
-    if (entity.id == C::SNIPER)
+    if (entity_id == C::SNIPER)
     {
         // TEMPORARY BEHAVIOUR
         static const int MOVEMENT_PERIOD = 4;
@@ -323,7 +326,7 @@ void Map::entity_move(int x, int y)
     }
 
     // Insector
-    if (entity.id == C::INSECTOR)
+    if (entity_id == C::INSECTOR)
     {
         static const int MOVEMENT_PERIOD = 8;
         static const int ACTION_COOLDOWN_MIN = 4; // amount of MOVEMENT_PERIOD
@@ -338,35 +341,34 @@ void Map::entity_move(int x, int y)
             Coords feels_path = pathfinding.pathfind(entities[0], { x,y }, ms_twister, "melee");
 
             // Reloading (even if doesn't see the player)
-            if (entity.action_cooldown > 0)
-                entity.action_cooldown--;
+            entity.action_decrement();
 
             // Insector logic
-            if ((feels_path.x != 0 || feels_path.y != 0) && entity.action_cooldown == 0 && !entity.should_reroll)
+            bool reroll_now = entity.check_initialization();
+            if ((feels_path.x != 0 || feels_path.y != 0) && entity.can_act_now() && !reroll_now)
             {
-                entity.action_cooldown = cooldown_set;
+                entity.mark_as_acted(cooldown_set);
                 spawn_around(x, y, C::INSECT, SIDE_SUMMON_CHANCE);
             }
             else
             {
-                if (entity.should_reroll)
-                {
-                    entity.should_reroll = false;
-                    entity.action_cooldown = cooldown_set;
-                }
+                if (reroll_now)
+                    entity.mark_as_acted(cooldown_set);
+
                 passive_movement(x, y);
             }
         }
     }
 
     // Bullet
-    if (entity.id == C::BULLET)
+    if (entity_id == C::BULLET)
     {
-        if (!try_move(x, y, entity.movement.x, entity.movement.y))
+        Coords bul_vect = entity.get_bullet_movement();
+        if (!try_move(x, y, bul_vect.x, bul_vect.y))
         {
             // WARNING: Meelee virtual attack exists too (if bullet summoning space is obstructed)
-            if (damage(x + entity.movement.x, y + entity.movement.y, entity.shot_by_player))
-                try_move(x, y, entity.movement.x, entity.movement.y);
+            if (damage(x + bul_vect.x, y + bul_vect.y, entity.was_shot_by_player()))
+                try_move(x, y, bul_vect.x, bul_vect.y);
             else
                 remove(x, y);
         }
@@ -379,7 +381,7 @@ char Map::get_tile(int x, int y) const
     if (x >= 0 && x < MAP_SIZE && y >= 0 && y < MAP_SIZE)
     {
         Tile& tile = tiles[x][y];
-        return tile.id;
+        return tile.get_id();
     }
     else return '=';
 }
@@ -390,39 +392,44 @@ TileDisplay Map::get_tile_display(int x, int y) const
     if (x >= 0 && x < MAP_SIZE && y >= 0 && y < MAP_SIZE)
     {
         Tile& tile = tiles[x][y];
-        char ch = tile.id;
+        char ch = tile.get_id();
+        char health = tile.get_health();
 
         if (ch == ' ')
             return { ' ', COLOR::DARK_GRAY };
 
         if (ch == C::NUMBER)
         {
-            if (tile.health >= 0 && tile.health <= 9)
+            if (health >= 0 && health <= 9)
             {
-                char new_ch = '0' + tile.health;
+                char new_ch = '0' + health;
                 return { new_ch, COLOR::DARK_GRAY };
             }
             else return { '9', COLOR::DARK_GRAY };
         }
 
-        if (tile.health >= 0 && tile.health <= 9 && tile.dmg_show_time > 0)
+        if (health >= 0 && health <= 9)
         {
-            char new_ch = '0' + tile.health;
-            if (tile.dmg_show_from_dmg)
-                return { new_ch, COLOR::DARK_RED };
-            else
-                return { new_ch, COLOR::BLUE };
+            unsigned char visibility = tile.is_dmg_visible();
+            if (visibility != 0)
+            {
+                char new_ch = '0' + health;
+                if (visibility == 1)
+                    return { new_ch, COLOR::DARK_RED };
+                else if(visibility == 2)
+                    return { new_ch, COLOR::BLUE };
+            }
         }
 
         if (ch == C::BULLET)
         {
-            if (tile.shot_by_player)
+            if (tile.was_shot_by_player())
                 return { ch, COLOR::DARK_GREEN };
             else
                 return { ch, COLOR::DARK_RED };
         }
 
-        if (ch == C::INSECT && tile.has_score == 0)
+        if (ch == C::INSECT && tile.get_score() == 0)
             ch = C::INSECT_DRIED;
 
         if (ch == C::WALL ||
@@ -454,8 +461,9 @@ void Map::spawn(int x, int y, char type, bool score_rich)
 {
     entities.push_back({ x,y });
     tiles[x][y] = Tile(type);
+
     if (!score_rich)
-        tiles[x][y].has_score = 0;
+        tiles[x][y].set_score(0);
 }
 
 // Tries to spawn entities randomly next to specific coordinates
@@ -479,10 +487,8 @@ void Map::spawn_bullet(int x, int y, int dx, int dy, bool by_player)
 {
     if (get_tile(x + dx, y + dy) == ' ' || damage(x + dx, y + dy, by_player))
     {
-        spawn(x + dx, y + dy, C::BULLET);
-        Tile& tile = tiles[entities.back().x][entities.back().y];
-        tile.movement = { dx,dy };
-        tile.shot_by_player = by_player;
+        entities.push_back({ x + dx,y + dy });
+        tiles[x + dx][y + dy] = Tile(C::BULLET, { dx, dy }, by_player);
     }
 }
 
@@ -504,23 +510,14 @@ void Map::remove(int x, int y)
 bool Map::damage(int x, int y, bool dmg_by_player)
 {
     Tile& tile = tiles[x][y];
-    tile.health--;
-    if (tile.health == 0) // don't change to <= 0, because -1 serves as sort of infinite health
+    if (tile.damage_by_one())
     {
         if (dmg_by_player)
-            score += tile.has_score;
+            score += tile.get_score();
         remove(x, y);
         return true;
     }
-    else
-    {
-        if (tile.id != C::NUMBER)
-        {
-            tile.dmg_show_time = DAMAGE_SHOW_TIME;
-            tile.dmg_show_from_dmg = true;
-        }
-        return false;
-    }
+    else return false;
 }
 
 // Tries to execute object's movement in a specific direction
@@ -551,13 +548,8 @@ bool Map::try_move(int x, int y, int dx, int dy, string mode)
 
         if (picking_up == C::FRUIT)
         {
-            if (tiles[x][y].health < MAX_PLAYER_HEALTH)
-                tiles[x][y].health++;
-            else
+            if (!tiles[x][y].heal_by_one(MAX_PLAYER_HEALTH))
                 score += OVERFRUIT_EAT_SCORE;
-
-            tiles[x][y].dmg_show_time = DAMAGE_SHOW_TIME;
-            tiles[x][y].dmg_show_from_dmg = false;
         }
     }
 
@@ -565,7 +557,7 @@ bool Map::try_move(int x, int y, int dx, int dy, string mode)
     {
         if (picking_up == C::BULLET)
         {
-            bool by_player = tiles[x + dx][y + dy].shot_by_player == true;
+            bool by_player = tiles[x + dx][y + dy].was_shot_by_player();
             if (damage(x, y, by_player))
                 return true;
         }

@@ -8,29 +8,8 @@ class Map;
 
 using namespace std;
 
-struct Tile {
-    char id = ' ';
-    Tile(char _id = ' ');
-
-    // Tile properties
-    int health = -1;
-    int has_score = 0;
-    int action_cooldown = 0;
-    int dmg_show_time = 0;
-    bool dmg_show_from_dmg = false;
-    bool should_reroll = true;
-
-    // Bullet properties
-    Coords movement = { 0,0 };
-    bool shot_by_player = false;
-};
-
-class Tile2 {
+class Tile {
 private:
-
-    // Constructors
-    Tile2(char _id = ' ', Coords bul_vect = { 0,0 }, bool by_player = false);
-    Tile2(char _id, char hard_set_health);
 
     // Private properties
     char id = ' ';
@@ -44,24 +23,31 @@ private:
     bool shot_by_player = false;
 
     // Private methods
-    void initialize_tile_values(bool dry);
+    void initialize_tile_values();
 
 public:
 
-    // Property methods
+    // Constructors
+    Tile(char _id = ' ', Coords bul_vect = { 0,0 }, bool by_player = false);
+
+    // Getters and setters
+    void set_health(char value);
+    void set_score(char value);
+    char get_id() const;
     char get_health() const;
     char get_score() const;
+    bool was_shot_by_player() const;
+
+    // Property methods
     bool heal_by_one(char max_health);
     bool damage_by_one();
     void mark_as_acted(char cooldown);
     bool can_act_now() const;
+    unsigned char is_dmg_visible() const; // 0:invisible, 1:red, 2:green
     void action_decrement();
     void dmg_show_decrement();
     bool check_initialization();
     Coords get_bullet_movement() const;
-
-    // Behaviour methods
-    // entity_move();
-    // spawn_reinforcements();
+    void execute_behaviour();
 
 };
