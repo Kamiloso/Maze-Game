@@ -8,6 +8,7 @@
 
 using namespace std;
 
+// Resets all marks from the labirynth instructions
 static void reset_marked_spaces(string* spaces)
 {
     for (int i = 0; i < LAB_ARRAY_SIZE; i++)
@@ -19,6 +20,7 @@ static void reset_marked_spaces(string* spaces)
         }
 }
 
+// Marks all spaces in labirynth instructions, which connect to given coordinates (recursive)
 static int mark_spaces(string* spaces, int x, int y)
 {
     static const int MIN = 0;
@@ -51,6 +53,7 @@ static int mark_spaces(string* spaces, int x, int y)
     return ret_count;
 }
 
+// Breaks completely random walls in labirynth instructions based on P probability (promiles)
 static void labirynth_walls_break(string* spaces, std::mt19937& ms_twister, int P)
 {
     for (int i = 0; i < LAB_ARRAY_SIZE; i++)
@@ -67,6 +70,7 @@ static void labirynth_walls_break(string* spaces, std::mt19937& ms_twister, int 
     }
 }
 
+// Returns instructions how to create labirynth. WARNING: Array pointer must be removed!
 static string* labirynth_instructions(std::mt19937& ms_twister)
 {
     system("cls");
@@ -89,7 +93,7 @@ static string* labirynth_instructions(std::mt19937& ms_twister)
         }
     }
 
-    // Connecting
+    // Detecting wall spaces
     vector<Coords> all_wall_spaces;
     for (int i = 0; i < LAB_ARRAY_SIZE; i++)
         for (int j = 0; j < LAB_ARRAY_SIZE; j++)
@@ -99,17 +103,21 @@ static string* labirynth_instructions(std::mt19937& ms_twister)
                 all_wall_spaces.push_back({j,i});
         }
 
+    // Connecting labirynth tiles until all of them are connected
     while (true)
     {
+        // Mark random tile and check if labirynth is done
         reset_marked_spaces(spaces);
         int rand_x = 2 * (ms_twister() % SECTORS_IN_LINE);
         int rand_y = 2 * (ms_twister() % SECTORS_IN_LINE);
         int connected_sectors = mark_spaces(spaces, rand_x, rand_y);
         if (connected_sectors == TOTAL_SECTORS)
-            break;
+            break; // everything connected, break
 
+        // Reroll all_wall_spaces
         std::shuffle(all_wall_spaces.begin(), all_wall_spaces.end(), ms_twister);
 
+        // Decide which wall to destroy
         for (int i = 0; i < all_wall_spaces.size(); i++)
         {
             int x = all_wall_spaces[i].x;
@@ -128,6 +136,7 @@ static string* labirynth_instructions(std::mt19937& ms_twister)
         }
     }
 
+    // Breaking some walls to make labirynth more spatial
     labirynth_walls_break(spaces, ms_twister, LABIRYNTH_WB);
 
     // Corner removing
@@ -150,7 +159,8 @@ static string* labirynth_instructions(std::mt19937& ms_twister)
     return spaces;
 }
 
-static int get_lar(int l) // Translates map coordinates into labirynth instructions coordinates
+// Translates map coordinates into labirynth instructions coordinates
+static int get_lar(int l)
 {
     int on_sector = l / (SECTOR_SIZE + 1);
     int additional_tiles = l % (SECTOR_SIZE + 1);
@@ -161,6 +171,7 @@ static int get_lar(int l) // Translates map coordinates into labirynth instructi
         return on_sector * 2;
 }
 
+// Pre-generates terrain and inserts it into given Tile** array
 void generate(Tile** tiles, std::mt19937& ms_twister)
 {
     string* lab_inst = labirynth_instructions(ms_twister);

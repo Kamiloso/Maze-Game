@@ -6,6 +6,7 @@
 static char preferred_axis = 'x';
 static char pre_direction = 0;
 
+// Checks if the selected input type was pressed recently
 static bool get_async_direction_state(char ch)
 {
     bool b1, b2;
@@ -33,6 +34,7 @@ static bool get_async_direction_state(char ch)
     return b1 || b2;
 }
 
+// Resets all registered inputs
 void reset_inputs()
 {
     preferred_axis = 'x';
@@ -42,14 +44,17 @@ void reset_inputs()
     get_async_direction_state('S');
     get_async_direction_state('D');
     get_async_direction_state('A');
+
     GetAsyncKeyState(VK_SPACE);
 }
 
+// Checks if space was pressed recently
 bool is_space_pressed()
 {
     return GetAsyncKeyState(VK_SPACE);
 }
 
+// Returns vector of player movement
 Coords get_movement_input()
 {
     Coords mov_input = { 0,0 };
@@ -74,6 +79,7 @@ Coords get_movement_input()
     return mov_input;
 }
 
+// Returns vector of player shooting
 Coords get_shooting_input()
 {
     Coords mov_input = { 0,0 };

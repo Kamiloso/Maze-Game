@@ -16,7 +16,7 @@ static void show_cursor() {
     cout << "\x1B[?25h";
 }
 
-void title_debug_info(string info) {
+static void title_debug_info(string info) {
     if (info != "")
         info = "title Maze Game v.1.0 ; " + info;
     else
@@ -24,7 +24,7 @@ void title_debug_info(string info) {
     system(info.c_str());
 }
 
-void play(unsigned int seed = 0)
+static void play(unsigned int seed = 0)
 {
     hide_cursor();
     Map* map = new Map(seed);

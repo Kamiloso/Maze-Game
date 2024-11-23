@@ -8,12 +8,14 @@
 
 using namespace std;
 
+// Sets text and background color of the console
 static void set_color(int text_color = 15, int bg_color = 0)
 {
 	HANDLE hConsole = GetStdHandle(STD_OUTPUT_HANDLE);
 	SetConsoleTextAttribute(hConsole, text_color + (bg_color << 4));
 }
 
+// Checks whether given character represents wall
 static bool is_wall_type(char c)
 {
 	if (c >= (char)0xC8 && c <= C::WALL) return true;
@@ -21,12 +23,13 @@ static bool is_wall_type(char c)
 	return false;
 }
 
-void display(Map* map, DisplayData ddt)
+// Displays the whole frame on a screen
+void display(Map* map, const DisplayData disp_data)
 {
 	// Tile array declaration
 	TileDisplay tiles[DISP_SIZE][DISP_SIZE];
-	int x1 = ddt.center.x - VISION_RANGE - 1;
-	int y1 = ddt.center.y - VISION_RANGE - 1;
+	int x1 = disp_data.center.x - VISION_RANGE - 1;
+	int y1 = disp_data.center.y - VISION_RANGE - 1;
 	for (int x = 0; x < DISP_SIZE; x++)
 		for (int y = 0; y < DISP_SIZE; y++)
 		{
@@ -121,13 +124,12 @@ void display(Map* map, DisplayData ddt)
 				pixels[x][y].color = COLOR::LIGHT_GRAY;
 		}
 
-	// Final map display
-	int reserve_rows = ROWS + 3;
-	cout << "\033[" << reserve_rows << "A";
+	// Final map display (temporary code)
+	cout << "\033[" << DISPLAY_ROWS << "A"; // Clear screen (fast)
+	cout << "\033[" << 3 << "A";
 
-	int show_x = ddt.center.x - (MAP_SIZE / 2);
-	int show_y = ddt.center.y - (MAP_SIZE / 2);
-
+	int show_x = disp_data.center.x - (MAP_SIZE / 2);
+	int show_y = disp_data.center.y - (MAP_SIZE / 2);
 	cout << " | Seed: " << map->get_seed() << " |" << endl;
 	cout << " | X: ";
 	cout.width(4);
@@ -136,13 +138,14 @@ void display(Map* map, DisplayData ddt)
 	cout.width(4);
 	cout << show_y;
 	cout << " |" << endl;
-	cout << " | Difficulty: " << ddt.difficulty << " | ";
-	cout << " Score: " << ddt.score << " | ";
-	cout << " Health: " << ddt.health << " |" << endl;
+	cout << " | Difficulty: " << disp_data.difficulty << " | ";
+	cout << " Score: " << disp_data.score << " | ";
+	cout << " Health: " << disp_data.health << " |" << endl;
 
 	display_array(pixels);
 }
 
+// Displays an array of pixels (tiles) on a screen
 void display_array(const TileDisplay pixels[DISPLAY_COLUMNS][DISPLAY_ROWS])
 {
 	char last_color = 255; // Set to something, which is never used

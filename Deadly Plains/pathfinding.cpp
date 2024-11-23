@@ -5,6 +5,9 @@
 #include "pathfinding.h"
 #include "common.h"
 
+using namespace std;
+
+// Self explanatory I think
 static Coords directions[4] = {
 	{0,1}, {1,0}, {0,-1}, {-1,0}
 };
@@ -19,7 +22,7 @@ static int id_from_mode(string mode)
 	return 0; // default is melee
 }
 
-// Converts map to pathfind coordinates
+// Converts map coordinates to pathfind coordinates
 static Coords map_to_pathfind_convert(Coords player, Coords entity)
 {
 	return {
@@ -28,7 +31,7 @@ static Coords map_to_pathfind_convert(Coords player, Coords entity)
 	};
 }
 
-// Converts pathfind to map coordinates
+// Converts pathfind coordinates to map coordinates
 static Coords pathfind_to_map_convert(Coords player, Coords entity)
 {
 	return {
@@ -54,7 +57,7 @@ static int find_smell(vector<EntitySmell> smells, char tile)
 }
 
 // Propagates smells from entity for pathfinding
-void Pathfinding::propagate_smells(int space[PATHFIND_TABLE_SIZE][PATHFIND_TABLE_SIZE], Coords begin_at)
+static void propagate_smells(int space[PATHFIND_TABLE_SIZE][PATHFIND_TABLE_SIZE], Coords begin_at)
 {
 	for (int i = 0; i < 4; i++)
 	{
@@ -73,10 +76,10 @@ void Pathfinding::propagate_smells(int space[PATHFIND_TABLE_SIZE][PATHFIND_TABLE
 	}
 }
 
-// Draws pathfinfing map of a certain type (executes only on frame start to reduce performance)
+// Draws pathfinfing map of a certain type
 void Pathfinding::draw_pathmap(Map* map, Coords player, vector<EntitySmell> smells, string mode)
 {
-	int m = id_from_mode(mode);
+	int id = id_from_mode(mode);
 
 	// Construct table
 	for (int x = 0; x < PATHFIND_TABLE_SIZE; x++)
@@ -84,19 +87,19 @@ void Pathfinding::draw_pathmap(Map* map, Coords player, vector<EntitySmell> smel
 		{
 			Coords map_c = pathfind_to_map_convert(player, { x, y });
 			char tile = map->get_tile(map_c.x, map_c.y);
-			simulation_space[m][x][y] = find_smell(smells, tile);
+			simulation_space[id][x][y] = find_smell(smells, tile);
 		}
 
 	// Smell calculations
 	for (int x = 0; x < PATHFIND_TABLE_SIZE; x++)
 		for (int y = 0; y < PATHFIND_TABLE_SIZE; y++)
-			propagate_smells(simulation_space[m], { x,y });
+			propagate_smells(simulation_space[id], { x,y });
 }
 
 // Returns pathfinfing vector of entity (both coordinates must be in "simulation space")
-Coords Pathfinding::pathfind(Map* map, Coords player, Coords entity, mt19937& ms_twister, string mode) const
+Coords Pathfinding::pathfind(Coords player, Coords entity, mt19937& ms_twister, string mode) const
 {
-	int m = id_from_mode(mode);
+	int id = id_from_mode(mode);
 
 	// Adjust entity coordinates to fit table
 	entity = map_to_pathfind_convert(player, entity);
@@ -112,7 +115,7 @@ Coords Pathfinding::pathfind(Map* map, Coords player, Coords entity, mt19937& ms
 		};
 		if (check_here.x >= 0 && check_here.x < PATHFIND_TABLE_SIZE && check_here.y >= 0 && check_here.y < PATHFIND_TABLE_SIZE)
 		{
-			int destination_found = simulation_space[m][check_here.x][check_here.y];
+			int destination_found = simulation_space[id][check_here.x][check_here.y];
 			if (destination_found > best_destination_found)
 			{
 				best_destination_found = destination_found;

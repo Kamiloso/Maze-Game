@@ -135,7 +135,7 @@ void Map::frame_update()
     // Entity movement
     for (int i = 0; i < lngt; i++)
     {
-        if (i == 1) // Drawing pathmaps for patfinding
+        if (i == 1) // Drawing pathmaps for pathfinding
         {
             static const int PLAYER_SMELL = 20;
             static const int ANIMAL_SMELL = 15;
@@ -282,9 +282,9 @@ void Map::entity_move(int x, int y)
             // Decide where to go
             Coords feels_path;
             if(entity.id == C::MONSTER)
-                feels_path = pathfinding.pathfind(this, entities[0], {x,y}, ms_twister, "predator");
+                feels_path = pathfinding.pathfind(entities[0], {x,y}, ms_twister, "predator");
             else
-                feels_path = pathfinding.pathfind(this, entities[0], { x,y }, ms_twister, "melee");
+                feels_path = pathfinding.pathfind(entities[0], { x,y }, ms_twister, "melee");
 
             // Go where it has been decided
             if (feels_path.x == 0 && feels_path.y == 0)
@@ -335,7 +335,7 @@ void Map::entity_move(int x, int y)
         if (frame % MOVEMENT_PERIOD == 0)
         {
             // Only for checking if can see the player
-            Coords feels_path = pathfinding.pathfind(this, entities[0], { x,y }, ms_twister, "melee");
+            Coords feels_path = pathfinding.pathfind(entities[0], { x,y }, ms_twister, "melee");
 
             // Reloading (even if doesn't see the player)
             if (entity.action_cooldown > 0)

@@ -92,4 +92,12 @@ namespace COLOR
 struct Coords {
     int x = 0;
     int y = 0;
+
+    bool operator==(const Coords& other) const {
+        return x == other.x && y == other.y;
+    }
+
+    bool operator!=(const Coords& other) const {
+        return !(*this == other);
+    }
 };
