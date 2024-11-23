@@ -21,9 +21,15 @@ private:
     bool initialization_flag = true;
     char bullet_movement = '\0';
     bool shot_by_player = false;
+    bool magical = false;
 
     // Private methods
     void initialize_tile_values();
+    bool check_initialization();
+    void dmg_show_decrement();
+    void mark_as_acted(char cooldown);
+    bool can_act_now() const;
+    void action_decrement();
 
 public:
 
@@ -33,21 +39,18 @@ public:
     // Getters and setters
     void set_health(char value);
     void set_score(char value);
+    void make_magical();
     char get_id() const;
     char get_health() const;
     char get_score() const;
     bool was_shot_by_player() const;
+    bool is_magical() const;
+    Coords get_bullet_movement() const;
+    unsigned char is_dmg_visible() const; // 0:invisible, 1:damaged, 2:healed
 
-    // Property methods
+    // Public methods
     bool heal_by_one(char max_health);
     bool damage_by_one();
-    void mark_as_acted(char cooldown);
-    bool can_act_now() const;
-    unsigned char is_dmg_visible() const; // 0:invisible, 1:red, 2:green
-    void action_decrement();
-    void dmg_show_decrement();
-    bool check_initialization();
-    Coords get_bullet_movement() const;
-    void execute_behaviour();
+    void execute_behaviour(Map* map, mt19937& ms_twister, int x, int y);
 
 };

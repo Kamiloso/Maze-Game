@@ -3,8 +3,8 @@
 
 #include "map.h"
 #include "generator.h"
-#include "input.h"
 #include "display.h"
+#include "input.h"
 #include "entities.h"
 #include "pathfinding.h"
 
@@ -56,11 +56,11 @@ Map::Map(unsigned int seed)
         {
             // Blocks
             if (get_tile(x, y) == ' ' && ms_twister() % 1000 < 20)
-                tiles[x][y] = Tile(C::BLOCK);
+                spawn(x, y, C::BLOCK, false);
 
             // Fruits
             if (get_tile(x, y) == ' ' && ms_twister() % 1000 < 3)
-                tiles[x][y] = Tile(C::FRUIT);
+                spawn(x, y, C::FRUIT, false);
 
             // Animals
             if (get_tile(x, y) == ' ' && ms_twister() % 1000 < 15)
@@ -78,18 +78,18 @@ Map::Map(unsigned int seed)
             if (get_tile(x, y) == ' ' && ms_twister() % 1000 < 3)
                 spawn(x, y, C::SNIPER);
 
+            // Spawners
+            if (get_tile(x, y) == ' ' && ms_twister() % 1000 < 3)
+                spawn(x, y, C::SPAWNER).make_magical();
+
             // Numbers
             if (get_tile(x, y) == ' ' && ms_twister() % 1000 < 15) {
-                tiles[x][y] = Tile(C::NUMBER);
-                tiles[x][y].set_health(ms_twister() % 4 + 1);
+                spawn(x, y, C::NUMBER, false).set_health(ms_twister() % 4 + 1);
             }
         }
 
     if (get_tile(200, 205) == ' ')
         spawn(200, 205, C::INSECTOR);
-
-    //if (get_tile(200, 195) == ' ')
-    //    spawn(200, 195, C::INSECTOR);
 }
 
 // Map destructor
@@ -152,7 +152,6 @@ void Map::frame_update()
 
         if (entities[i].x != MAP_SIZE)
         {
-            tiles[entities[i].x][entities[i].y].dmg_show_decrement();
             entity_move(entities[i].x, entities[i].y);
         }
     }
@@ -180,6 +179,12 @@ void Map::frame_update()
     frame++;
 }
 
+// Returns frame number
+int Map::get_frame() const
+{
+    return frame;
+}
+
 // Checks if game is over and if yes, returns score greater or equal 0
 int Map::end() const
 {
@@ -191,26 +196,6 @@ int Map::end() const
 unsigned int Map::get_seed() const
 {
     return public_seed;
-}
-
-// Moves the entity in a random direction
-void Map::passive_movement(int x, int y)
-{
-    // Vectors for passive side movements
-    Coords sides[4] = {
-        {1,0}, {-1,0},
-        {0,1}, {0,-1}
-    };
-    for (int i = 0; i < 4; i++)
-    {
-        int j = ms_twister() % (4 - i) + i;
-        swap(sides[i], sides[j]);
-    }
-
-    // passive movement
-    for (int i = 0; i < 4; i++)
-        if (try_move(x, y, sides[i].x, sides[i].y))
-            break;
 }
 
 // Executes actions of entity in the specific position (should not be called outside entity movement loop)
@@ -229,150 +214,7 @@ void Map::entity_move(int x, int y)
         return;
 
     // Execute entity behaviour
-    entity.execute_behaviour();
-
-    // ---------------------- //
-
-    char entity_id = entity.get_id();
-
-    // Player
-    if (entity_id == C::PLAYER)
-    {
-        static const int MOVEMENT_PERIOD = 2; // amount of frames
-        static const int ACTION_COOLDOWN = 2; // amount of MOVEMENT_PERIOD periods
-
-        if (frame % MOVEMENT_PERIOD == 0)
-        {
-            entity.action_decrement();
-
-            if (!is_space_pressed())
-            {
-                // movement mode
-                Coords mov_input = get_movement_input();
-                try_move(x, y, mov_input.x, mov_input.y, "push");
-            }
-            else if (entity.can_act_now())
-            {
-                // shooting mode
-                Coords shoot_input = get_shooting_input();
-                if (shoot_input.x != 0 || shoot_input.y != 0)
-                {
-                    entity.mark_as_acted(ACTION_COOLDOWN);
-                    spawn_bullet(x, y, shoot_input.x, shoot_input.y, true);
-                }
-            }
-        }
-    }
-
-    // Animal
-    if (entity_id == C::ANIMAL)
-    {
-        static const int MOVEMENT_PERIOD = 16;
-
-        if (frame % MOVEMENT_PERIOD == 0)
-            passive_movement(x, y);
-    }
-
-    // Monster / Insect
-    if (entity_id == C::MONSTER || entity_id == C::INSECT)
-    {
-        int movement_period = entity_id == C::MONSTER ? 8 : 4;
-        static const int DAMAGE_PERIOD = 8;
-        static const int PLAYER_SMELL = 15;
-
-        if (frame % movement_period == 0)
-        {
-            // Decide where to go
-            Coords feels_path;
-            if(entity_id == C::MONSTER)
-                feels_path = pathfinding.pathfind(entities[0], {x,y}, ms_twister, "predator");
-            else
-                feels_path = pathfinding.pathfind(entities[0], { x,y }, ms_twister, "melee");
-
-            // Go where it has been decided
-            if (feels_path.x == 0 && feels_path.y == 0)
-            {
-                passive_movement(x, y);
-            }
-            else
-            {
-                if (!try_move(x, y, feels_path.x, feels_path.y, "bullets_ignore") && frame % DAMAGE_PERIOD == 0)
-                {
-                    char tile_attack = get_tile(x + feels_path.x, y + feels_path.y);
-                    if (tile_attack == C::PLAYER || (tile_attack == C::ANIMAL && entity_id == C::MONSTER))
-                        damage(x + feels_path.x, y + feels_path.y);
-                }
-            }
-        }
-    }
-
-    // Sniper
-    if (entity_id == C::SNIPER)
-    {
-        // TEMPORARY BEHAVIOUR
-        static const int MOVEMENT_PERIOD = 4;
-
-        if (frame % MOVEMENT_PERIOD == 0)
-        {
-            if (frame % 8 == 0)
-            {
-                passive_movement(x, y);
-            }
-            else
-            {
-                spawn_bullet(x, y, 0, 1, false);
-            }
-        }
-    }
-
-    // Insector
-    if (entity_id == C::INSECTOR)
-    {
-        static const int MOVEMENT_PERIOD = 8;
-        static const int ACTION_COOLDOWN_MIN = 4; // amount of MOVEMENT_PERIOD
-        static const int ACTION_COOLDOWN_MAX = 8; // amount of MOVEMENT_PERIOD
-        static const int SIDE_SUMMON_CHANCE = 350; // (in promiles)
-        
-        const int cooldown_set = ms_twister() % (ACTION_COOLDOWN_MAX - ACTION_COOLDOWN_MIN + 1) + ACTION_COOLDOWN_MIN;
-
-        if (frame % MOVEMENT_PERIOD == 0)
-        {
-            // Only for checking if can see the player
-            Coords feels_path = pathfinding.pathfind(entities[0], { x,y }, ms_twister, "melee");
-
-            // Reloading (even if doesn't see the player)
-            entity.action_decrement();
-
-            // Insector logic
-            bool reroll_now = entity.check_initialization();
-            if ((feels_path.x != 0 || feels_path.y != 0) && entity.can_act_now() && !reroll_now)
-            {
-                entity.mark_as_acted(cooldown_set);
-                spawn_around(x, y, C::INSECT, SIDE_SUMMON_CHANCE);
-            }
-            else
-            {
-                if (reroll_now)
-                    entity.mark_as_acted(cooldown_set);
-
-                passive_movement(x, y);
-            }
-        }
-    }
-
-    // Bullet
-    if (entity_id == C::BULLET)
-    {
-        Coords bul_vect = entity.get_bullet_movement();
-        if (!try_move(x, y, bul_vect.x, bul_vect.y))
-        {
-            // WARNING: Meelee virtual attack exists too (if bullet summoning space is obstructed)
-            if (damage(x + bul_vect.x, y + bul_vect.y, entity.was_shot_by_player()))
-                try_move(x, y, bul_vect.x, bul_vect.y);
-            else
-                remove(x, y);
-        }
-    }
+    entity.execute_behaviour(this, ms_twister, x, y);
 }
 
 // Returns the character which represents object in the specific position
@@ -414,7 +256,9 @@ TileDisplay Map::get_tile_display(int x, int y) const
             if (visibility != 0)
             {
                 char new_ch = '0' + health;
-                if (visibility == 1)
+                if (tile.is_magical())
+                    return { new_ch, COLOR::MAGENTA };
+                else if (visibility == 1)
                     return { new_ch, COLOR::DARK_RED };
                 else if(visibility == 2)
                     return { new_ch, COLOR::BLUE };
@@ -423,7 +267,9 @@ TileDisplay Map::get_tile_display(int x, int y) const
 
         if (ch == C::BULLET)
         {
-            if (tile.was_shot_by_player())
+            if (tile.is_magical())
+                return { ch, COLOR::MAGENTA };
+            else if (tile.was_shot_by_player())
                 return { ch, COLOR::DARK_GREEN };
             else
                 return { ch, COLOR::DARK_RED };
@@ -432,6 +278,9 @@ TileDisplay Map::get_tile_display(int x, int y) const
         if (ch == C::INSECT && tile.get_score() == 0)
             ch = C::INSECT_DRIED;
 
+        if (tile.is_magical())
+            return { ch, COLOR::MAGENTA };
+
         if (ch == C::WALL ||
             ch == C::BLOCK)
             return { ch, COLOR::DARK_GRAY };
@@ -439,8 +288,7 @@ TileDisplay Map::get_tile_display(int x, int y) const
         if (ch == C::PLAYER)
             return { ch, COLOR::GREEN };
 
-        if (ch == C::ANIMAL ||
-            ch == C::SPAWNER)
+        if (ch == C::ANIMAL)
             return { ch, COLOR::YELLOW };
 
         if (ch == C::FRUIT)
@@ -450,24 +298,43 @@ TileDisplay Map::get_tile_display(int x, int y) const
             ch == C::SNIPER ||
             ch == C::INSECTOR ||
             ch == C::INSECT ||
-            ch == C::INSECT_DRIED)
+            ch == C::INSECT_DRIED ||
+            ch == C::SPAWNER)
             return { ch, COLOR::RED };
     }
     else return { '=', COLOR::DARK_GRAY };
 }
 
-// Spawns the object (unsafe to use without checking if empty space)
-void Map::spawn(int x, int y, char type, bool score_rich)
+// Spawns the object (can overwrite tiles)
+Tile& Map::spawn(int x, int y, char type, bool has_ai, bool magical)
 {
-    entities.push_back({ x,y });
+    if (get_tile(x, y) == '=')
+        return tiles[0][0];
+
+    if (get_tile(x, y) != ' ')
+        remove(x, y);
+
     tiles[x][y] = Tile(type);
 
-    if (!score_rich)
-        tiles[x][y].set_score(0);
+    if (has_ai) entities.push_back({ x,y });
+    if (magical) tiles[x][y].make_magical();
+
+    return tiles[x][y];
+}
+
+// Spawns a bullet in a specific direction or makes a 1-tick damage pulse
+void Map::spawn_bullet(int x, int y, int dx, int dy, bool by_player, bool magical)
+{
+    if (get_tile(x + dx, y + dy) == ' ' || damage(x + dx, y + dy, by_player))
+    {
+        entities.push_back({ x + dx,y + dy });
+        tiles[x + dx][y + dy] = Tile(C::BULLET, { dx, dy }, by_player);
+        if(magical) tiles[x + dx][y + dy].make_magical();
+    }
 }
 
 // Tries to spawn entities randomly next to specific coordinates
-void Map::spawn_around(int x, int y, char type, const int SIDE_CHANCE, bool score_rich)
+void Map::spawn_around(int x, int y, char type, const int SIDE_CHANCE, bool score_rich, bool magical)
 {
     static const Coords sides[4] = { {0,1}, {0,-1}, {1,0}, {-1,0} };
     for (int i = 0; i < 4; i++)
@@ -477,31 +344,9 @@ void Map::spawn_around(int x, int y, char type, const int SIDE_CHANCE, bool scor
 
         if (get_tile(x + dx, y + dy) == ' ' && ms_twister() % 1000 < SIDE_CHANCE)
         {
-            spawn(x + dx, y + dy, type, score_rich);
-        }
-    }
-}
-
-// Spawns a bullet in a specific direction or makes a 1-tick damage pulse
-void Map::spawn_bullet(int x, int y, int dx, int dy, bool by_player)
-{
-    if (get_tile(x + dx, y + dy) == ' ' || damage(x + dx, y + dy, by_player))
-    {
-        entities.push_back({ x + dx,y + dy });
-        tiles[x + dx][y + dy] = Tile(C::BULLET, { dx, dy }, by_player);
-    }
-}
-
-// Removes the object from the map
-void Map::remove(int x, int y)
-{
-    tiles[x][y] = Tile();
-    for (int i = 0; i < entities.size(); i++)
-    {
-        if (entities[i].x == x && entities[i].y == y)
-        {
-            entities[i].x = MAP_SIZE; // !!! marking entity as non-existing (removing it after every behaviour loop)
-            break;
+            Tile& spawned = spawn(x + dx, y + dy, type);
+            if (!score_rich) spawned.set_score(0);
+            if (magical) spawned.make_magical();
         }
     }
 }
@@ -509,6 +354,8 @@ void Map::remove(int x, int y)
 // Damages the object and returns true if object was killed by this method
 bool Map::damage(int x, int y, bool dmg_by_player)
 {
+    if (get_tile(x, y) == '=') return false;
+
     Tile& tile = tiles[x][y];
     if (tile.damage_by_one())
     {
@@ -520,9 +367,27 @@ bool Map::damage(int x, int y, bool dmg_by_player)
     else return false;
 }
 
+// Removes the object from the map
+void Map::remove(int x, int y)
+{
+    if (get_tile(x, y) == '=') return;
+
+    tiles[x][y] = Tile();
+    for (int i = 0; i < entities.size(); i++)
+    {
+        if (entities[i].x == x && entities[i].y == y)
+        {
+            entities[i].x = MAP_SIZE; // !!! marking entity as non-existing (removing it after every behaviour loop)
+            break;
+        }
+    }
+}
+
 // Tries to execute object's movement in a specific direction
 bool Map::try_move(int x, int y, int dx, int dy, string mode)
 {
+    if (get_tile(x, y) == '=') return false;
+
     if (mode == "push" && can_be_pushed(get_tile(x + dx, y + dy)))
         if (!try_move(x + dx, y + dy, dx, dy, "push"))
             return false;
@@ -552,8 +417,7 @@ bool Map::try_move(int x, int y, int dx, int dy, string mode)
                 score += OVERFRUIT_EAT_SCORE;
         }
     }
-
-    if (mode == "bullets_ignore")
+    else if (mode == "bullets_ignore")
     {
         if (picking_up == C::BULLET)
         {
@@ -577,4 +441,24 @@ bool Map::try_move(int x, int y, int dx, int dy, string mode)
         }
     }
     return true;
+}
+
+// Moves the entity in a random direction
+void Map::passive_movement(int x, int y)
+{
+    // Vectors for passive side movements
+    Coords sides[4] = {
+        {1,0}, {-1,0},
+        {0,1}, {0,-1}
+    };
+    for (int i = 0; i < 4; i++)
+    {
+        int j = ms_twister() % (4 - i) + i;
+        swap(sides[i], sides[j]);
+    }
+
+    // passive movement
+    for (int i = 0; i < 4; i++)
+        if (try_move(x, y, sides[i].x, sides[i].y))
+            break;
 }

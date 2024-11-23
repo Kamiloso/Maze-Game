@@ -2,6 +2,8 @@
 
 #include "entities.h"
 #include "common.h"
+#include "input.h"
+#include "map.h"
 
 // Default constructor
 Tile::Tile(char _id, Coords bul_vect, bool by_player)
@@ -17,6 +19,7 @@ Tile::Tile(char _id, Coords bul_vect, bool by_player)
 		else if (bul_vect == Coords{ -1,0 }) bullet_movement = 'W';
 		shot_by_player = by_player;
 	}
+
 	initialize_tile_values();
 }
 
@@ -56,7 +59,7 @@ void Tile::initialize_tile_values()
 
 	case C::SPAWNER:
 		health = 10;
-		reward_score = 20;
+        reward_score = 16 / 2; /* always magical */
 		break;
 
 	case C::BULLET:
@@ -84,6 +87,16 @@ void Tile::set_score(char value)
 {
 	if (value >= 0)
 		reward_score = value;
+}
+
+// Magical activator
+void Tile::make_magical()
+{
+    if (!magical)
+    {
+        magical = true;
+        reward_score *= 2;
+    }
 }
 
 // ID getter
@@ -184,6 +197,11 @@ bool Tile::check_initialization()
 	else return false;
 }
 
+bool Tile::is_magical() const
+{
+    return magical;
+}
+
 // Returns bullet movement coordinates
 Coords Tile::get_bullet_movement() const
 {
@@ -194,7 +212,159 @@ Coords Tile::get_bullet_movement() const
 	return { 0,0 };
 }
 
-void Tile::execute_behaviour()
+// Executes tile behaviour based on its type [This is Map's friend]
+void Tile::execute_behaviour(Map* map, mt19937& ms_twister, int x, int y)
 {
-	;
+	// DANGER! Be careful!
+	// ---------------------
+	// Tile object represent tile coordinates and not the actual object.
+	// When entity moves, it technically copies all of its values into
+	// another spot and overwrites them with the default tile instantion Tile().
+	// ---------------------
+	// This means, that you should be very careful, when modifying this method.
+	// Never reference to anything in this object after moving, damaging, removing
+	// or affecting the object in any other way using map API, unless you really
+	// know what you're doing!
+
+    dmg_show_decrement();
+    int frame = map->get_frame();
+
+    // Player
+    if (id == C::PLAYER)
+    {
+        static const int MOVEMENT_PERIOD = 2; // amount of frames
+        static const int ACTION_COOLDOWN = 2; // amount of MOVEMENT_PERIOD periods
+
+        if (frame % MOVEMENT_PERIOD == 0)
+        {
+            action_decrement();
+
+            if (!is_space_pressed())
+            {
+                // movement mode
+                Coords mov_input = get_movement_input();
+                map->try_move(x, y, mov_input.x, mov_input.y, "push");
+            }
+            else if (can_act_now())
+            {
+                // shooting mode
+                Coords shoot_input = get_shooting_input();
+                if (shoot_input.x != 0 || shoot_input.y != 0)
+                {
+                    mark_as_acted(ACTION_COOLDOWN);
+                    map->spawn_bullet(x, y, shoot_input.x, shoot_input.y, true);
+                }
+            }
+        }
+    }
+
+    // Animal
+    if (id == C::ANIMAL)
+    {
+        static const int MOVEMENT_PERIOD = 16;
+
+        if (frame % MOVEMENT_PERIOD == 0)
+            map->passive_movement(x, y);
+    }
+
+    // Monster / Insect
+    if (id == C::MONSTER || id == C::INSECT)
+    {
+        const int movement_period = id == C::MONSTER ? 8 : 4;
+        static const int DAMAGE_PERIOD = 8;
+        static const int PLAYER_SMELL = 15;
+
+        if (frame % movement_period == 0)
+        {
+            // Decide where to go
+            Coords feels_path;
+            if (id == C::MONSTER)
+                feels_path = map->pathfinding.pathfind(map->entities[0], { x,y }, ms_twister, "predator");
+            else
+                feels_path = map->pathfinding.pathfind(map->entities[0], { x,y }, ms_twister, "melee");
+
+            // Go where it has been decided
+            if (feels_path.x == 0 && feels_path.y == 0)
+            {
+                map->passive_movement(x, y);
+            }
+            else
+            {
+                if (!map->try_move(x, y, feels_path.x, feels_path.y, "bullets_ignore") && frame % DAMAGE_PERIOD == 0)
+                {
+                    char tile_attack = map->get_tile(x + feels_path.x, y + feels_path.y);
+                    if (tile_attack == C::PLAYER || (tile_attack == C::ANIMAL && id == C::MONSTER))
+                        map->damage(x + feels_path.x, y + feels_path.y);
+                }
+            }
+        }
+    }
+
+    // Sniper
+    if (id == C::SNIPER)
+    {
+        // TEMPORARY BEHAVIOUR
+        static const int MOVEMENT_PERIOD = 4;
+
+        if (frame % MOVEMENT_PERIOD == 0)
+        {
+            if (frame % 8 == 0)
+            {
+                map->passive_movement(x, y);
+            }
+            else
+            {
+                map->spawn_bullet(x, y, 0, 1, false, magical);
+            }
+        }
+    }
+
+    // Insector
+    if (id == C::INSECTOR)
+    {
+        static const int MOVEMENT_PERIOD = 8;
+        static const int ACTION_COOLDOWN_MIN = 4; // amount of MOVEMENT_PERIOD
+        static const int ACTION_COOLDOWN_MAX = 8; // amount of MOVEMENT_PERIOD
+        static const int SIDE_SUMMON_CHANCE = 350; // (in promiles)
+
+        const int cooldown_set = ms_twister() % (ACTION_COOLDOWN_MAX - ACTION_COOLDOWN_MIN + 1) + ACTION_COOLDOWN_MIN;
+
+        if (frame % MOVEMENT_PERIOD == 0)
+        {
+            // Only for checking if can see the player
+            Coords feels_path = map->pathfinding.pathfind(map->entities[0], { x,y }, ms_twister, "melee");
+
+            // Reloading (even if doesn't see the player)
+            action_decrement();
+
+            // Insector logic
+            bool reroll_now = check_initialization();
+            if ((feels_path.x != 0 || feels_path.y != 0) && can_act_now() && !reroll_now)
+            {
+                mark_as_acted(cooldown_set);
+                map->spawn_around(x, y, C::INSECT, SIDE_SUMMON_CHANCE, false, magical);
+            }
+            else
+            {
+                if (reroll_now)
+                    mark_as_acted(cooldown_set);
+
+                map->passive_movement(x, y);
+            }
+        }
+    }
+
+    // Bullet
+    if (id == C::BULLET)
+    {
+        Coords bul_vect = get_bullet_movement();
+        if (!map->try_move(x, y, bul_vect.x, bul_vect.y))
+        {
+            // WARNING: Meelee virtual attack exists too (if bullet summoning space is obstructed, in spawn_bullet() function)
+            if (map->damage(x + bul_vect.x, y + bul_vect.y, was_shot_by_player()))
+                map->try_move(x, y, bul_vect.x, bul_vect.y);
+            else
+                map->remove(x, y);
+        }
+    }
 }

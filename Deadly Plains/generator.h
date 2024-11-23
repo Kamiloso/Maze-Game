@@ -2,6 +2,6 @@
 
 #include <random>
 
-struct Tile;
+class Tile;
 
 void generate(Tile** tiles, std::mt19937& ms_twister);
