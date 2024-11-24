@@ -8,7 +8,7 @@ const int VISION_RANGE = 11;        // Range of player vision
 const int SECTOR_SIZE = 5;          // Size of single sector
 const int LEVEL_RANGE = 33;         // Amount of sectors in each direction from spawn (excluding [0,0] sector)
 const int LABIRYNTH_WB = 50;        // Wall-breaking parameter for the labirynth generating alghorithm (in promiles)
-const int DAMAGE_SHOW_TIME = 6;     // Entity health visibility duration after taking damage (in frames)
+const int DAMAGE_SHOW_TIME = 5;     // Entity health visibility duration after taking damage (in frames)
 const int MAX_PLAYER_HEALTH = 5;    // Max health that player can have
 const int OVERFRUIT_EAT_SCORE = 5;  // Score for eating fruit while having max health
 

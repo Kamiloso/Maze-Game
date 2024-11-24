@@ -31,19 +31,12 @@ private:
     bool can_act_now() const;
     void action_decrement();
 
-    // Entity action methods
-    void spawn_insects(Map* map, mt19937& ms_twister, bool mag, int x, int y);
-    void spawner_activate(Map* map, mt19937& ms_twister, bool mag, int x, int y);
-
 public:
 
     // Constructors
     Tile(char _id = ' ', Coords bul_vect = { 0,0 }, bool by_player = false);
 
-    // Getters and setters
-    void set_health(char value);
-    void set_score(char value);
-    void make_magical();
+    // Getters
     char get_id() const;
     char get_health() const;
     char get_score() const;
@@ -53,9 +46,16 @@ public:
     unsigned char is_dmg_visible() const; // 0:invisible, 1:damaged, 2:healed
 
     // Public methods
+    void set_health(char value);
+    void set_score(char value);
     bool heal_by_one(char max_health);
     bool damage_by_one();
+    void make_magical();
     void execute_behaviour(Map* map, mt19937& ms_twister, int x, int y);
-    void on_kill(Map* map, mt19937& ms_twister, char pre_ch, bool pre_mag, int x, int y); // BE VERY CAREFUL WITH IT
+
+    // Static methods
+    static void on_kill(Map* map, mt19937& ms_twister, char id, bool mag, int x, int y);
+    static void spawn_insects(Map* map, mt19937& ms_twister, bool mag, int x, int y);
+    static void spawner_activate(Map* map, mt19937& ms_twister, bool mag, int x, int y);
 
 };

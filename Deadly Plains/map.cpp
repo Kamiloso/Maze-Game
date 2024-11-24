@@ -181,7 +181,7 @@ void Map::frame_update()
     for (int i = 0; i < delayed_kills.size(); i++)
     {
         KillDelayed& kdl = delayed_kills[i];
-        tiles[kdl.coords.x][kdl.coords.y].on_kill(this, ms_twister, kdl.id, kdl.mag, kdl.coords.x, kdl.coords.y);
+        Tile::on_kill(this, ms_twister, kdl.id, kdl.mag, kdl.coords.x, kdl.coords.y);
     }
     delayed_kills.clear();
 

@@ -231,75 +231,6 @@ Coords Tile::get_bullet_movement() const
 	return { 0,0 };
 }
 
-// Spawns entities around a tile in the spawner style
-void Tile::spawner_activate(Map* map, mt19937& ms_twister, bool mag, int x, int y)
-{
-    static const int SP_RADIUS = 2;
-    const int x_min = x - SP_RADIUS;
-    const int x_max = x + SP_RADIUS;
-    const int y_min = y - SP_RADIUS;
-    const int y_max = y + SP_RADIUS;
-
-    static const int MIN_ENTITIES = 4;
-    static const int MAX_ENTITIES = 8;
-    static const int SPAWN_CHANCE = 250; // in promiles
-
-    int left_amount = ms_twister() % (MAX_ENTITIES - MIN_ENTITIES + 1) + MIN_ENTITIES;
-    vector<Coords> candidate_coords;
-
-    for (int x1 = x_min; x1 <= x_max; x1++)
-        for (int y1 = y_min; y1 <= y_max; y1++)
-            if (map->get_tile(x1, y1) == ' ')
-                candidate_coords.push_back({ x1, y1 });
-
-    std::shuffle(candidate_coords.begin(), candidate_coords.end(), ms_twister);
-
-    for (int i = 0; i < candidate_coords.size(); i++)
-    {
-        int rand = ms_twister() % 1000;
-        int x2 = candidate_coords[i].x;
-        int y2 = candidate_coords[i].y;
-
-        if (rand >= 0 && rand < 500)
-            map->spawn(x2, y2, C::MONSTER, true, mag);
-        if (rand >= 500 && rand < 1000)
-            map->spawn(x2, y2, C::INSECT, true, mag);
-
-        left_amount--;
-        if (left_amount <= 0)
-            break;
-    }
-}
-
-// Spawns insects around a tile in the insector style
-void Tile::spawn_insects(Map* map, mt19937& ms_twister, bool mag, int x, int y)
-{
-    static const Coords sides[4] = { {0,1}, {0,-1}, {1,0}, {-1,0} };
-    
-    static const int SIDE_CHANCE = 350; // in promiles
-
-    bool anything_spawned = false;
-    int retries = 0;
-
-    while (!anything_spawned && retries < 6)
-    {
-        for (int i = 0; i < 4; i++)
-        {
-            int dx = sides[i].x;
-            int dy = sides[i].y;
-
-            if (map->get_tile(x + dx, y + dy) == ' ' && ms_twister() % 1000 < SIDE_CHANCE)
-            {
-                map->spawn(x + dx, y + dy, C::INSECT, true, mag).set_score(0);
-                anything_spawned = true;
-            }
-        }
-
-        retries++;
-    }
-}
-
-
 // Executes tile behaviour based on its type [This is Map's friend]
 void Tile::execute_behaviour(Map* map, mt19937& ms_twister, int x, int y)
 {
@@ -456,13 +387,83 @@ void Tile::execute_behaviour(Map* map, mt19937& ms_twister, int x, int y)
     }
 }
 
-void Tile::on_kill(Map* map, mt19937& ms_twister, char pre_ch, bool pre_mag, int x, int y)
+// --- STATIC MEMBERS ---
+
+void Tile::on_kill(Map* map, mt19937& ms_twister, char id, bool mag, int x, int y)
 {
-    // WARNING: Working on dead tile
-    if (id == C::BULLET)
+    // Removing bullet if killed by it
+    if (map->get_tile(x, y) == C::BULLET)
         map->remove(x, y, true);
 
-    // WARNING: May be working on double dead tile
-    if(pre_ch == C::SPAWNER)
-        spawner_activate(map, ms_twister, pre_mag, x, y);
+    // Activating spawner
+    if(id == C::SPAWNER)
+        spawner_activate(map, ms_twister, mag, x, y);
+}
+
+// Spawns insects around a tile in the insector style
+void Tile::spawn_insects(Map* map, mt19937& ms_twister, bool mag, int x, int y)
+{
+    static const Coords sides[4] = { {0,1}, {0,-1}, {1,0}, {-1,0} };
+
+    static const int SIDE_CHANCE = 350; // in promiles
+
+    bool anything_spawned = false;
+    int retries = 0;
+
+    while (!anything_spawned && retries < 6)
+    {
+        for (int i = 0; i < 4; i++)
+        {
+            int dx = sides[i].x;
+            int dy = sides[i].y;
+
+            if (map->get_tile(x + dx, y + dy) == ' ' && ms_twister() % 1000 < SIDE_CHANCE)
+            {
+                map->spawn(x + dx, y + dy, C::INSECT, true, mag).set_score(0);
+                anything_spawned = true;
+            }
+        }
+
+        retries++;
+    }
+}
+
+// Spawns entities around a tile in the spawner style
+void Tile::spawner_activate(Map* map, mt19937& ms_twister, bool mag, int x, int y)
+{
+    static const int SP_RADIUS = 2;
+    const int x_min = x - SP_RADIUS;
+    const int x_max = x + SP_RADIUS;
+    const int y_min = y - SP_RADIUS;
+    const int y_max = y + SP_RADIUS;
+
+    static const int MIN_ENTITIES = 4;
+    static const int MAX_ENTITIES = 8;
+    static const int SPAWN_CHANCE = 250; // in promiles
+
+    int left_amount = ms_twister() % (MAX_ENTITIES - MIN_ENTITIES + 1) + MIN_ENTITIES;
+    vector<Coords> candidate_coords;
+
+    for (int x1 = x_min; x1 <= x_max; x1++)
+        for (int y1 = y_min; y1 <= y_max; y1++)
+            if (map->get_tile(x1, y1) == ' ')
+                candidate_coords.push_back({ x1, y1 });
+
+    std::shuffle(candidate_coords.begin(), candidate_coords.end(), ms_twister);
+
+    for (int i = 0; i < candidate_coords.size(); i++)
+    {
+        int rand = ms_twister() % 1000;
+        int x2 = candidate_coords[i].x;
+        int y2 = candidate_coords[i].y;
+
+        if (rand >= 0 && rand < 500)
+            map->spawn(x2, y2, C::MONSTER, true, mag);
+        if (rand >= 500 && rand < 1000)
+            map->spawn(x2, y2, C::INSECT, true, mag);
+
+        left_amount--;
+        if (left_amount <= 0)
+            break;
+    }
 }

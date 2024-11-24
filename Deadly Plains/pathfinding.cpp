@@ -99,6 +99,7 @@ void Pathfinding::draw_pathmap(Map* map, Coords player, vector<EntitySmell> smel
 // Returns pathfinfing vector of entity (both coordinates must be in "simulation space")
 Coords Pathfinding::pathfind(Coords player, Coords entity, mt19937& ms_twister, string mode) const
 {
+	// Get pathfind table id
 	int id = id_from_mode(mode);
 
 	// Adjust entity coordinates to fit table
@@ -134,4 +135,50 @@ Coords Pathfinding::pathfind(Coords player, Coords entity, mt19937& ms_twister, 
 		return potential_destinations[ms_twister() % potential_destinations.size()];
 	else
 		return { 0,0 };
+}
+
+// Returns pathfinfing vector of entity (both coordinates must be in "simulation space")
+Coords Pathfinding::pathfind_distance(Coords player, Coords entity, mt19937& ms_twister, string mode) const
+{
+	// Get pathfind table id
+	int id = id_from_mode(mode);
+
+	// Find tile weights of all directions
+	// ???
+
+	// Calculate best position for all possibilities
+	// ???
+
+	// Pick the best destination
+	// ???
+
+	Coords best_destination = { 0,0 };
+	return best_destination;
+}
+
+int Pathfinding::sniper_weight(Coords player, Coords point, int dx, int dy, string mode) const
+{
+	// Get pathfind table id
+	int id = id_from_mode(mode);
+
+	// Adjust entity coordinates to fit table
+	point = map_to_pathfind_convert(player, point);
+
+	// Find the best tile
+	int best_found = -1;
+	while (point.x >= 0 && point.y >= 0 && point.x < PATHFIND_TABLE_SIZE && point.y < PATHFIND_TABLE_SIZE)
+	{
+		int found_now = simulation_space[id][point.x][point.y];
+		
+		if (found_now == -1)
+			break;
+
+		if (found_now > best_found)
+			best_found = found_now;
+
+		point.x += dx;
+		point.y += dy;
+	}
+
+	return best_found;
 }
