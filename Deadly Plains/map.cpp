@@ -31,6 +31,15 @@ static bool can_be_picked_up(char c)
     else return false;
 }
 
+// Does allow on_kill() method?
+static bool activates_on_kill(char c)
+{
+    if (
+        c == C::SPAWNER
+        ) return true;
+    else return false;
+}
+
 // Map constructor
 Map::Map(unsigned int seed)
 {
@@ -63,11 +72,11 @@ Map::Map(unsigned int seed)
                 spawn(x, y, C::FRUIT, false);
 
             // Animals
-            if (get_tile(x, y) == ' ' && ms_twister() % 1000 < 15)
+            if (get_tile(x, y) == ' ' && ms_twister() % 1000 < 8)
                 spawn(x, y, C::ANIMAL);
 
             // Monsters
-            if (get_tile(x, y) == ' ' && ms_twister() % 1000 < 3)
+            if (get_tile(x, y) == ' ' && ms_twister() % 1000 < 2)
                 spawn(x, y, C::MONSTER);
 
             // Insects
@@ -75,21 +84,22 @@ Map::Map(unsigned int seed)
                 spawn(x, y, C::INSECT);
 
             // Snipers
-            if (get_tile(x, y) == ' ' && ms_twister() % 1000 < 3)
+            if (get_tile(x, y) == ' ' && ms_twister() % 1000 < 2)
                 spawn(x, y, C::SNIPER);
 
             // Spawners
             if (get_tile(x, y) == ' ' && ms_twister() % 1000 < 3)
                 spawn(x, y, C::SPAWNER).make_magical();
 
+            // Insectors
+            if (get_tile(x, y) == ' ' && ms_twister() % 1000 < 1)
+                spawn(x, y, C::INSECTOR);
+
             // Numbers
             if (get_tile(x, y) == ' ' && ms_twister() % 1000 < 15) {
                 spawn(x, y, C::NUMBER, false).set_health(ms_twister() % 4 + 1);
             }
         }
-
-    if (get_tile(200, 205) == ' ')
-        spawn(200, 205, C::INSECTOR);
 }
 
 // Map destructor
@@ -166,6 +176,14 @@ void Map::frame_update()
             lngt--; i--;
         }
     }
+
+    // Execute delayed on_kill()
+    for (int i = 0; i < delayed_kills.size(); i++)
+    {
+        KillDelayed& kdl = delayed_kills[i];
+        tiles[kdl.coords.x][kdl.coords.y].on_kill(this, ms_twister, kdl.id, kdl.mag, kdl.coords.x, kdl.coords.y);
+    }
+    delayed_kills.clear();
 
     // Auto display map
     DisplayData ddt;
@@ -256,7 +274,7 @@ TileDisplay Map::get_tile_display(int x, int y) const
             if (visibility != 0)
             {
                 char new_ch = '0' + health;
-                if (tile.is_magical())
+                if (tile.is_magical() && MAGICAL_DAMAGE_IS_MAGENTA)
                     return { new_ch, COLOR::MAGENTA };
                 else if (visibility == 1)
                     return { new_ch, COLOR::DARK_RED };
@@ -312,7 +330,7 @@ Tile& Map::spawn(int x, int y, char type, bool has_ai, bool magical)
         return tiles[0][0];
 
     if (get_tile(x, y) != ' ')
-        remove(x, y);
+        remove(x, y, true);
 
     tiles[x][y] = Tile(type);
 
@@ -350,11 +368,13 @@ bool Map::damage(int x, int y, bool dmg_by_player)
 }
 
 // Removes the object from the map
-void Map::remove(int x, int y)
+void Map::remove(int x, int y, bool despawn_mode)
 {
     if (get_tile(x, y) == '=') return;
 
-    tiles[x][y].on_kill(this, ms_twister, x, y);
+    if (!despawn_mode && activates_on_kill(tiles[x][y].get_id()))
+        delayed_kills.push_back({ tiles[x][y].get_id(), tiles[x][y].is_magical(), {x,y}});
+
     tiles[x][y] = Tile();
     for (int i = 0; i < entities.size(); i++)
     {
@@ -410,7 +430,7 @@ bool Map::try_move(int x, int y, int dx, int dy, string mode)
         }
     }
 
-    remove(x + dx, y + dy);
+    remove(x + dx, y + dy, true);
     tiles[x + dx][y + dy] = tiles[x][y];
     tiles[x][y] = Tile();
 

@@ -13,6 +13,12 @@ struct TileDisplay;
 
 using namespace std;
 
+struct KillDelayed {
+    char id = ' ';
+    bool mag = false;
+    Coords coords = { 0,0 };
+};
+
 class Map {
 private:
 
@@ -21,6 +27,7 @@ private:
     vector<Coords> entities;
     std::mt19937 ms_twister;
     Pathfinding pathfinding;
+    vector<KillDelayed> delayed_kills;
 
     // Private properties
     unsigned int public_seed = 0;
@@ -48,7 +55,7 @@ public:
     Tile& spawn(int x, int y, char type, bool has_ai = true, bool magical = false);
     void spawn_bullet(int x, int y, int dx, int dy, bool by_player, bool magical = false);
     bool damage(int x, int y, bool dmg_by_player = false); // returns true if tile was killed
-    void remove(int x, int y);
+    void remove(int x, int y, bool despawn_mode = false);
     bool try_move(int x, int y, int dx, int dy, string mode = "");
     void passive_movement(int x, int y);
 

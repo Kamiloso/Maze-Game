@@ -23,6 +23,9 @@ const int DISP_SIZE = 2 * VISION_RANGE + 3;                     // Size of displ
 const int DISPLAY_ROWS = DISP_SIZE;                             // Amount of display-array-2 rows
 const int DISPLAY_COLUMNS = DISP_SIZE * 2 - 1;                  // Amount of display-array-2 columns
 
+// Logical constants
+const bool MAGICAL_DAMAGE_IS_MAGENTA = false;
+
 // Common characters
 namespace C
 {
