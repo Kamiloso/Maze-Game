@@ -333,24 +333,6 @@ void Map::spawn_bullet(int x, int y, int dx, int dy, bool by_player, bool magica
     }
 }
 
-// Tries to spawn entities randomly next to specific coordinates
-void Map::spawn_around(int x, int y, char type, const int SIDE_CHANCE, bool score_rich, bool magical)
-{
-    static const Coords sides[4] = { {0,1}, {0,-1}, {1,0}, {-1,0} };
-    for (int i = 0; i < 4; i++)
-    {
-        int dx = sides[i].x;
-        int dy = sides[i].y;
-
-        if (get_tile(x + dx, y + dy) == ' ' && ms_twister() % 1000 < SIDE_CHANCE)
-        {
-            Tile& spawned = spawn(x + dx, y + dy, type);
-            if (!score_rich) spawned.set_score(0);
-            if (magical) spawned.make_magical();
-        }
-    }
-}
-
 // Damages the object and returns true if object was killed by this method
 bool Map::damage(int x, int y, bool dmg_by_player)
 {
@@ -372,6 +354,7 @@ void Map::remove(int x, int y)
 {
     if (get_tile(x, y) == '=') return;
 
+    tiles[x][y].on_kill(this, ms_twister, x, y);
     tiles[x][y] = Tile();
     for (int i = 0; i < entities.size(); i++)
     {

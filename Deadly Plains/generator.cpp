@@ -179,7 +179,7 @@ void generate(Tile** tiles, std::mt19937& ms_twister)
     for (int x = 0; x < MAP_SIZE; x++)
         for (int y = 0; y < MAP_SIZE; y++)
         {
-            // Border creating, WARNING: these borders prevent wrong array indexes. Don't remove them!
+            // Border creating, WARNING: these borders prevent wrong array indexes. Don't remove them,
             // or at least replace them with something unbreakable and unmovable.
             if (x == 0 || x == MAP_SIZE - 1 || y == 0 || y == MAP_SIZE - 1)
             {

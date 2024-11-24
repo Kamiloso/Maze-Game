@@ -31,6 +31,10 @@ private:
     bool can_act_now() const;
     void action_decrement();
 
+    // Entity action methods
+    void spawn_insects(Map* map, mt19937& ms_twister, int x, int y);
+    void spawner_activate(Map* map, mt19937& ms_twister, int x, int y);
+
 public:
 
     // Constructors
@@ -52,5 +56,6 @@ public:
     bool heal_by_one(char max_health);
     bool damage_by_one();
     void execute_behaviour(Map* map, mt19937& ms_twister, int x, int y);
+    void on_kill(Map* map, mt19937& ms_twister, int x, int y);
 
 };

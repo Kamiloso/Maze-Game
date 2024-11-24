@@ -5,6 +5,21 @@
 #include "input.h"
 #include "map.h"
 
+// Buffs a value in magical style
+static char magical_buff(char start, char limit)
+{
+    if (start <= 0 || start >= limit)
+        return start;
+    
+    int start_int = start;
+    start_int += (start_int + 2) / 3;
+
+    if (start_int < limit)
+        return (char)start_int;
+    else
+        return limit;
+}
+
 // Default constructor
 Tile::Tile(char _id, Coords bul_vect, bool by_player)
 {
@@ -57,9 +72,9 @@ void Tile::initialize_tile_values()
 		reward_score = 3;
 		break;
 
-	case C::SPAWNER:
-		health = 10;
-        reward_score = 16 / 2; /* always magical */
+	case C::SPAWNER: /* Remember, this is always magical tile! */
+		health = 5;
+        reward_score = 7;
 		break;
 
 	case C::BULLET:
@@ -95,7 +110,10 @@ void Tile::make_magical()
     if (!magical)
     {
         magical = true;
-        reward_score *= 2;
+        
+        // Magical entities are more powerful and give more score
+        reward_score = magical_buff(reward_score, 127);
+        health = magical_buff(health, 10);
     }
 }
 
@@ -146,7 +164,7 @@ bool Tile::damage_by_one()
 	dmg_show_from_dmg = true;
 
 	health--;
-	return health == 0;
+    return health == 0;
 }
 
 // Mark tile as acted temporarily
@@ -164,7 +182,7 @@ bool Tile::can_act_now() const
 // Checks if can act now
 unsigned char Tile::is_dmg_visible() const
 {
-	if (dmg_show_time == 0)
+	if (dmg_show_time == 0 || id == C::BULLET)
 		return 0; // invisible
 	else if (dmg_show_from_dmg)
 		return 1; // visible red
@@ -212,6 +230,60 @@ Coords Tile::get_bullet_movement() const
 	return { 0,0 };
 }
 
+// Spawns entities around a tile in the spawner style
+void Tile::spawner_activate(Map* map, mt19937& ms_twister, int x, int y)
+{
+    static const int SP_RADIUS = 2;
+    const int x_min = x - SP_RADIUS;
+    const int x_max = x + SP_RADIUS;
+    const int y_min = y - SP_RADIUS;
+    const int y_max = y + SP_RADIUS;
+
+    static const int SPAWN_CHANCE = 250; // in promiles
+
+    for (int x1 = x_min; x1 <= x_max; x1++)
+        for (int y1 = y_min; y1 <= y_max; y1++)
+        {
+            int rand = ms_twister() % 1000;
+            if (map->get_tile(x1, y1) == ' ' && rand < SPAWN_CHANCE)
+            {
+                if (rand < SPAWN_CHANCE / 2)
+                    map->spawn(x1, y1, C::MONSTER, true, magical);
+                else
+                    map->spawn(x1, y1, C::INSECT, true, magical);
+            }
+        }
+}
+
+// Spawns insects around a tile in the insector style
+void Tile::spawn_insects(Map* map, mt19937& ms_twister, int x, int y)
+{
+    static const Coords sides[4] = { {0,1}, {0,-1}, {1,0}, {-1,0} };
+    
+    static const int SIDE_CHANCE = 350; // in promiles
+
+    bool anything_spawned = false;
+    int retries = 0;
+
+    while (!anything_spawned && retries < 6)
+    {
+        for (int i = 0; i < 4; i++)
+        {
+            int dx = sides[i].x;
+            int dy = sides[i].y;
+
+            if (map->get_tile(x + dx, y + dy) == ' ' && ms_twister() % 1000 < SIDE_CHANCE)
+            {
+                map->spawn(x + dx, y + dy, C::INSECT, true, magical).set_score(0);
+                anything_spawned = true;
+            }
+        }
+
+        retries++;
+    }
+}
+
+
 // Executes tile behaviour based on its type [This is Map's friend]
 void Tile::execute_behaviour(Map* map, mt19937& ms_twister, int x, int y)
 {
@@ -252,7 +324,7 @@ void Tile::execute_behaviour(Map* map, mt19937& ms_twister, int x, int y)
                 if (shoot_input.x != 0 || shoot_input.y != 0)
                 {
                     mark_as_acted(ACTION_COOLDOWN);
-                    map->spawn_bullet(x, y, shoot_input.x, shoot_input.y, true);
+                    map->spawn_bullet(x, y, shoot_input.x, shoot_input.y, true, magical);
                 }
             }
         }
@@ -325,7 +397,6 @@ void Tile::execute_behaviour(Map* map, mt19937& ms_twister, int x, int y)
         static const int MOVEMENT_PERIOD = 8;
         static const int ACTION_COOLDOWN_MIN = 4; // amount of MOVEMENT_PERIOD
         static const int ACTION_COOLDOWN_MAX = 8; // amount of MOVEMENT_PERIOD
-        static const int SIDE_SUMMON_CHANCE = 350; // (in promiles)
 
         const int cooldown_set = ms_twister() % (ACTION_COOLDOWN_MAX - ACTION_COOLDOWN_MIN + 1) + ACTION_COOLDOWN_MIN;
 
@@ -342,7 +413,7 @@ void Tile::execute_behaviour(Map* map, mt19937& ms_twister, int x, int y)
             if ((feels_path.x != 0 || feels_path.y != 0) && can_act_now() && !reroll_now)
             {
                 mark_as_acted(cooldown_set);
-                map->spawn_around(x, y, C::INSECT, SIDE_SUMMON_CHANCE, false, magical);
+                spawn_insects(map, ms_twister, x, y);
             }
             else
             {
@@ -366,5 +437,15 @@ void Tile::execute_behaviour(Map* map, mt19937& ms_twister, int x, int y)
             else
                 map->remove(x, y);
         }
+    }
+}
+
+void Tile::on_kill(Map* map, mt19937& ms_twister, int x, int y)
+{
+    switch (id)
+    {
+    case C::SPAWNER:
+        spawner_activate(map, ms_twister, x, y);
+        break;
     }
 }
