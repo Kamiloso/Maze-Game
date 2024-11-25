@@ -9,29 +9,33 @@ static char pre_direction = 0;
 // Checks if the selected input type was pressed recently
 static bool get_async_direction_state(char ch)
 {
-    bool b1, b2;
+    bool b1, b2, b3;
     switch (ch)
     {
     case 'W':
         b1 = GetAsyncKeyState(VK_UP);
         b2 = GetAsyncKeyState(0x57); // key W
+        b3 = GetAsyncKeyState(0x49); // key I
         break;
     case 'S':
         b1 = GetAsyncKeyState(VK_DOWN);
-        b2 = GetAsyncKeyState(0x53); // key = S
+        b2 = GetAsyncKeyState(0x53); // key S
+        b3 = GetAsyncKeyState(0x4B); // key K
         break;
     case 'D':
         b1 = GetAsyncKeyState(VK_RIGHT);
-        b2 = GetAsyncKeyState(0x44); // key = D
+        b2 = GetAsyncKeyState(0x44); // key D
+        b3 = GetAsyncKeyState(0x4C); // key L
         break;
     case 'A':
         b1 = GetAsyncKeyState(VK_LEFT);
-        b2 = GetAsyncKeyState(0x41); // key = A
+        b2 = GetAsyncKeyState(0x41); // key A
+        b3 = GetAsyncKeyState(0x4A); // key J
         break;
     default:
         return false;
     }
-    return b1 || b2;
+    return b1 || b2 || b3;
 }
 
 // Resets all registered inputs
