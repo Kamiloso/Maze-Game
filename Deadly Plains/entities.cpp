@@ -80,6 +80,8 @@ void Tile::initialize_tile_values()
 
 	case C::BULLET:
 		health = 1;
+        if (shot_by_player)
+            health = 2;
 		break;
 
 	case C::FRUIT:
@@ -323,17 +325,26 @@ void Tile::execute_behaviour(Map* map, mt19937& ms_twister, int x, int y)
     if (id == C::SNIPER)
     {
         // TEMPORARY BEHAVIOUR
-        static const int MOVEMENT_PERIOD = 4;
+        static const int MOVEMENT_PERIOD = 8;
 
         if (frame % MOVEMENT_PERIOD == 0)
         {
-            if (frame % 8 == 0)
+            Coords sniper_vision = map->pathfinding.get_sniper_direction(map->entities[0], { x,y }, ms_twister, "distance");
+            if (sniper_vision != Coords{ 0,0 })
             {
-                map->passive_movement(x, y);
+                // Targeting player, shoot!
+                int dx = sniper_vision.x;
+                int dy = sniper_vision.y;
+                map->spawn_bullet(x, y, dx, dy, false, magical);
             }
             else
             {
-                map->spawn_bullet(x, y, 0, 1, false, magical);
+                // Distance pathfinding
+                Coords dist_path = map->pathfinding.pathfind_distance(map->entities[0], { x,y }, ms_twister, "distance");
+                if (dist_path != Coords{ 0,0 })
+                    map->try_move(x, y, dist_path.x, dist_path.y, "bullets_ignore");
+                else
+                    map->passive_movement(x, y);
             }
         }
     }

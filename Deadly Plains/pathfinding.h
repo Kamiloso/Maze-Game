@@ -25,6 +25,7 @@ public:
     // Public methods
     void draw_pathmap(Map* map, Coords player, vector<EntitySmell> smells, string mode);
     Coords pathfind(Coords player, Coords entity, mt19937& ms_twister, string mode) const;
+    Coords get_sniper_direction(Coords player, Coords entity, mt19937& ms_twister, string mode) const;
     Coords pathfind_distance(Coords player, Coords entity, mt19937& ms_twister, string mode) const;
     int sniper_weight(Coords player, Coords point, int dx, int dy, string mode) const;
 };

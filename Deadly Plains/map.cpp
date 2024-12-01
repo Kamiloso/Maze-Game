@@ -84,7 +84,7 @@ Map::Map(unsigned int seed)
                 spawn(x, y, C::INSECT);
 
             // Snipers
-            if (get_tile(x, y) == ' ' && ms_twister() % 1000 < 2)
+            if (get_tile(x, y) == ' ' && ms_twister() % 1000 < 4)
                 spawn(x, y, C::SNIPER);
 
             // Spawners
@@ -92,7 +92,7 @@ Map::Map(unsigned int seed)
                 spawn(x, y, C::SPAWNER).make_magical();
 
             // Insectors
-            if (get_tile(x, y) == ' ' && ms_twister() % 1000 < 1)
+            if (get_tile(x, y) == ' ' && ms_twister() % 1000 < 0)
                 spawn(x, y, C::INSECTOR);
 
             // Numbers
@@ -147,9 +147,6 @@ void Map::frame_update()
     {
         if (i == 1) // Drawing pathmaps for pathfinding
         {
-            static const int PLAYER_SMELL = 20;
-            static const int ANIMAL_SMELL = 15;
-
             pathfinding.draw_pathmap(this, entities[0], { 
                 { C::PLAYER, PLAYER_SMELL } }, "melee");
 

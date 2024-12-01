@@ -1,3 +1,4 @@
+#include <iostream>
 #include <vector>
 #include <random>
 
@@ -11,6 +12,16 @@ using namespace std;
 static Coords directions[4] = {
 	{0,1}, {1,0}, {0,-1}, {-1,0}
 };
+
+// Returns biggest element of the array
+static int biggest_element(int* arr, int lngt)
+{
+	int biggest = arr[0];
+	for (int i = 1; i < lngt; i++)
+		if (arr[i] > biggest)
+			biggest = arr[i];
+	return biggest;
+}
 
 // Returns pathfind mode ID
 static int id_from_mode(string mode)
@@ -137,23 +148,95 @@ Coords Pathfinding::pathfind(Coords player, Coords entity, mt19937& ms_twister, 
 		return { 0,0 };
 }
 
-// Returns pathfinfing vector of entity (both coordinates must be in "simulation space")
+// Returns the direction of shooting if in right position (both coordinates must be in "simulation space")
+Coords Pathfinding::get_sniper_direction(Coords player, Coords entity, mt19937& ms_twister, string mode) const
+{
+	// Get pathfind table id
+	int id = id_from_mode(mode);
+
+	// Find weights of all directions
+	int D[4] = {
+		sniper_weight(player, { entity.x + 0, entity.y + 1 }, 0, 1, mode),
+		sniper_weight(player, { entity.x + 0, entity.y - 1 }, 0, -1, mode),
+		sniper_weight(player, { entity.x + 1, entity.y + 0 }, 1, 0, mode),
+		sniper_weight(player, { entity.x - 1, entity.y + 0 }, -1, 0, mode)
+	};
+
+	// Choose the best value
+	int value_TOTAL = biggest_element(D, 4);
+	if (value_TOTAL < MIN_SNIPER_SMELL)
+		return { 0,0 };
+
+	// Pick the random best element
+	vector<Coords> potential_destinations;
+	if (D[0] == value_TOTAL) potential_destinations.push_back({0,1});
+	if (D[1] == value_TOTAL) potential_destinations.push_back({0,-1});
+	if (D[2] == value_TOTAL) potential_destinations.push_back({1,0});
+	if (D[3] == value_TOTAL) potential_destinations.push_back({-1,0});
+	std::shuffle(potential_destinations.begin(), potential_destinations.end(), ms_twister);
+
+	return potential_destinations[0];
+}
+
+// Returns distance pathfinfing vector of entity (both coordinates must be in "simulation space")
 Coords Pathfinding::pathfind_distance(Coords player, Coords entity, mt19937& ms_twister, string mode) const
 {
 	// Get pathfind table id
 	int id = id_from_mode(mode);
 
 	// Find tile weights of all directions
-	// ???
+	int N[3] = {
+		sniper_weight(player, { entity.x - 1, entity.y + 0 }, 0, 1, mode),
+		sniper_weight(player, { entity.x + 0, entity.y + 1 }, 0, 1, mode),
+		sniper_weight(player, { entity.x + 1, entity.y + 0 }, 0, 1, mode)
+	};
+	int S[3] = {
+		sniper_weight(player, { entity.x - 1, entity.y + 0 }, 0, -1, mode),
+		sniper_weight(player, { entity.x + 0, entity.y - 1 }, 0, -1, mode),
+		sniper_weight(player, { entity.x + 1, entity.y + 0 }, 0, -1, mode)
+	};
+	int E[3] = {
+		sniper_weight(player, { entity.x + 0, entity.y - 1 }, 1, 0, mode),
+		sniper_weight(player, { entity.x + 1, entity.y + 0 }, 1, 0, mode),
+		sniper_weight(player, { entity.x + 0, entity.y + 1 }, 1, 0, mode)
+	};
+	int W[3] = {
+		sniper_weight(player, { entity.x + 0, entity.y - 1 }, -1, 0, mode),
+		sniper_weight(player, { entity.x - 1, entity.y + 0 }, -1, 0, mode),
+		sniper_weight(player, { entity.x + 0, entity.y + 1 }, -1, 0, mode)
+	};
 
 	// Calculate best position for all possibilities
-	// ???
+	int arr_N[] = { N[1], S[1], E[2], W[2] };
+	int arr_S[] = { N[1], S[1], E[0], W[0] };
+	int arr_E[] = { N[2], S[2], E[1], W[1] };
+	int arr_W[] = { N[0], S[0], E[1], W[1] };
+	int arr_CURRENT[] = { N[1], S[1], E[1], W[1] };
 
-	// Pick the best destination
-	// ???
+	int value_N = biggest_element(arr_N, 4);
+	int value_S = biggest_element(arr_S, 4);
+	int value_E = biggest_element(arr_E, 4);
+	int value_W = biggest_element(arr_W, 4);
+	int value_CURRENT = biggest_element(arr_CURRENT, 4);
 
-	Coords best_destination = { 0,0 };
-	return best_destination;
+	// Calculate the best movement value
+	int arr_TOTAL[] = { value_N, value_S, value_E, value_W };
+	int value_TOTAL = biggest_element(arr_TOTAL, 4);
+	
+	// No decision conditions
+	if (value_TOTAL < 0 || value_TOTAL <= value_CURRENT)
+		return pathfind(player, entity, ms_twister, mode);
+
+	// Create a list of all potential destinations
+	vector<Coords> potential_destinations;
+	if (value_N == value_TOTAL) potential_destinations.push_back({ 0,1 });
+	if (value_S == value_TOTAL) potential_destinations.push_back({ 0,-1 });
+	if (value_E == value_TOTAL) potential_destinations.push_back({ 1,0 });
+	if (value_W == value_TOTAL) potential_destinations.push_back({ -1,0 });
+	std::shuffle(potential_destinations.begin(), potential_destinations.end(), ms_twister);
+
+	// Return the first element of shuffled vector
+	return potential_destinations[0];
 }
 
 int Pathfinding::sniper_weight(Coords player, Coords point, int dx, int dy, string mode) const
@@ -169,8 +252,7 @@ int Pathfinding::sniper_weight(Coords player, Coords point, int dx, int dy, stri
 	while (point.x >= 0 && point.y >= 0 && point.x < PATHFIND_TABLE_SIZE && point.y < PATHFIND_TABLE_SIZE)
 	{
 		int found_now = simulation_space[id][point.x][point.y];
-		
-		if (found_now == -1)
+		if (found_now <= 0) // should work only in smell space
 			break;
 
 		if (found_now > best_found)
