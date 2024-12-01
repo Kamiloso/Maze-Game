@@ -54,52 +54,7 @@ Map::Map(unsigned int seed)
         tiles[i] = new Tile[MAP_SIZE];
     }
     
-    generate(tiles, ms_twister);
-
-    int spawn_xy = (MAP_SIZE - 1) / 2;
-    spawn(spawn_xy, spawn_xy, C::PLAYER);
-
-    // Pre-generate objects (TEMPORARY)
-    for (int x = 0; x < MAP_SIZE; x++)
-        for (int y = 0; y < MAP_SIZE; y++)
-        {
-            // Blocks
-            if (get_tile(x, y) == ' ' && ms_twister() % 1000 < 20)
-                spawn(x, y, C::BLOCK, false);
-
-            // Fruits
-            if (get_tile(x, y) == ' ' && ms_twister() % 1000 < 3)
-                spawn(x, y, C::FRUIT, false);
-
-            // Animals
-            if (get_tile(x, y) == ' ' && ms_twister() % 1000 < 8)
-                spawn(x, y, C::ANIMAL);
-
-            // Monsters
-            if (get_tile(x, y) == ' ' && ms_twister() % 1000 < 2)
-                spawn(x, y, C::MONSTER);
-
-            // Insects
-            if (get_tile(x, y) == ' ' && ms_twister() % 1000 < 2)
-                spawn(x, y, C::INSECT);
-
-            // Snipers
-            if (get_tile(x, y) == ' ' && ms_twister() % 1000 < 4)
-                spawn(x, y, C::SNIPER);
-
-            // Spawners
-            if (get_tile(x, y) == ' ' && ms_twister() % 1000 < 3)
-                spawn(x, y, C::SPAWNER).make_magical();
-
-            // Insectors
-            if (get_tile(x, y) == ' ' && ms_twister() % 1000 < 0)
-                spawn(x, y, C::INSECTOR);
-
-            // Numbers
-            if (get_tile(x, y) == ' ' && ms_twister() % 1000 < 15) {
-                spawn(x, y, C::NUMBER, false).set_health(ms_twister() % 4 + 1);
-            }
-        }
+    generate(this, ms_twister);
 }
 
 // Map destructor
@@ -271,9 +226,7 @@ TileDisplay Map::get_tile_display(int x, int y) const
             if (visibility != 0)
             {
                 char new_ch = '0' + health;
-                if (tile.is_magical() && MAGICAL_DAMAGE_IS_MAGENTA)
-                    return { new_ch, COLOR::MAGENTA };
-                else if (visibility == 1)
+                if (visibility == 1)
                     return { new_ch, COLOR::DARK_RED };
                 else if(visibility == 2)
                     return { new_ch, COLOR::BLUE };
@@ -316,6 +269,8 @@ TileDisplay Map::get_tile_display(int x, int y) const
             ch == C::INSECT_DRIED ||
             ch == C::SPAWNER)
             return { ch, COLOR::RED };
+
+        return { ch, COLOR::LIGHT_GRAY };
     }
     else return { '=', COLOR::DARK_GRAY };
 }

@@ -79,9 +79,8 @@ void Tile::initialize_tile_values()
 		break;
 
 	case C::BULLET:
-		health = 1;
-        if (shot_by_player)
-            health = 2;
+        if (shot_by_player) health = 2;
+        else health = 1;
 		break;
 
 	case C::FRUIT:
@@ -329,13 +328,18 @@ void Tile::execute_behaviour(Map* map, mt19937& ms_twister, int x, int y)
 
         if (frame % MOVEMENT_PERIOD == 0)
         {
+            action_decrement();
             Coords sniper_vision = map->pathfinding.get_sniper_direction(map->entities[0], { x,y }, ms_twister, "distance");
             if (sniper_vision != Coords{ 0,0 })
             {
                 // Targeting player, shoot!
-                int dx = sniper_vision.x;
-                int dy = sniper_vision.y;
-                map->spawn_bullet(x, y, dx, dy, false, magical);
+                if (can_act_now())
+                {
+                    int dx = sniper_vision.x;
+                    int dy = sniper_vision.y;
+                    map->spawn_bullet(x, y, dx, dy, false, magical);
+                    mark_as_acted(1); // if you want to slow down shooting, change to 2
+                }
             }
             else
             {

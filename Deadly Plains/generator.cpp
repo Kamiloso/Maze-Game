@@ -5,6 +5,7 @@
 #include "common.h"
 #include "generator.h"
 #include "entities.h"
+#include "map.h"
 
 using namespace std;
 
@@ -171,11 +172,15 @@ static int get_lar(int l)
         return on_sector * 2;
 }
 
-// Pre-generates terrain and inserts it into given Tile** array
-void generate(Tile** tiles, std::mt19937& ms_twister)
+// Pre-generates terrain on a given Map
+void generate(Map* map, std::mt19937& ms_twister)
 {
     string* lab_inst = labirynth_instructions(ms_twister);
 
+    const int BLIND_ROOM_APPEAR_CHANCE = 400; // (in promiles)
+    const int LINEAR_ROOM_APPEAR_CHANCE = 0; // (in promiles)
+
+    // LAYER 1 - Unbreakable walls (C::WALL)
     for (int x = 0; x < MAP_SIZE; x++)
         for (int y = 0; y < MAP_SIZE; y++)
         {
@@ -183,7 +188,7 @@ void generate(Tile** tiles, std::mt19937& ms_twister)
             // or at least replace them with something unbreakable and unmovable.
             if (x == 0 || x == MAP_SIZE - 1 || y == 0 || y == MAP_SIZE - 1)
             {
-                tiles[x][y] = Tile(C::WALL);
+                map->spawn(x, y, C::WALL, false);
                 continue;
             }
 
@@ -193,12 +198,96 @@ void generate(Tile** tiles, std::mt19937& ms_twister)
             if ((lar_x % 2) + (lar_y % 2) > 0)
             {
                 if (lab_inst[lar_y][lar_x] == '#')
-                    tiles[x][y] = Tile(C::WALL);
+                    map->spawn(x, y, C::WALL, false);
                 continue;
             }
+        }
 
-            // Other tiles empty
-            tiles[x][y] = Tile();
+    // LAYER 2 - Technical anchors (C::ANCHOR)
+    for (int x = 0; x < MAP_SIZE; x++)
+        for (int y = 0; y < MAP_SIZE; y++)
+        {
+            // Generating room anchors if suitable position
+            if (x % (SECTOR_SIZE + 1) == 3 && y % (SECTOR_SIZE + 1) == 3)
+            {
+                // Get lar coordinates
+                int lar_x = get_lar(x);
+                int lar_y = get_lar(y);
+
+                // Checking directions
+                bool N = map->get_tile(x, y + 3) != C::WALL;
+                bool S = map->get_tile(x, y - 3) != C::WALL;
+                bool E = map->get_tile(x + 3, y) != C::WALL;
+                bool W = map->get_tile(x - 3, y) != C::WALL;
+
+                // Checking if suitable position
+                if (N + S + E + W == 1 && ms_twister() % 1000 < BLIND_ROOM_APPEAR_CHANCE)
+                {
+                    // Blind route room
+                    Tile tile = map->spawn(x, y, C::ANCHOR, false);
+                    if (N) tile.set_score(1);
+                    else if (S) tile.set_score(2);
+                    else if (E) tile.set_score(3);
+                    else if (W) tile.set_score(4);
+                }
+                if (N + S + E + W == 2 && (N + S == 2 || E + W == 2) && ms_twister() % 1000 < LINEAR_ROOM_APPEAR_CHANCE)
+                {
+                    // Linear route room
+                    Tile tile = map->spawn(x, y, C::ANCHOR, false);
+                    if (N + S == 2) tile.set_score(5);
+                    if (E + W == 2) tile.set_score(6);
+                }
+
+                continue;
+            }
+        }
+
+    // LAYER 3 - Player spawn
+    int spawn_xy = (MAP_SIZE - 1) / 2;
+    map->spawn(spawn_xy, spawn_xy, C::PLAYER);
+    
+    // LAYER 4 - Random field fill
+    for (int x = 0; x < MAP_SIZE; x++)
+        for (int y = 0; y < MAP_SIZE; y++)
+        {
+            if (map->get_tile(x, y) == ' ')
+            {
+                int rnd = ms_twister() % 1000;
+                
+                if (rnd >= 0 && rnd <= 29)
+                    map->spawn(x, y, C::BLOCK, false);
+
+                else if (rnd >= 30 && rnd <= 39)
+                    map->spawn(x, y, C::ANIMAL);
+
+                else if (rnd >= 40 && rnd <= 41)
+                    map->spawn(x, y, C::FRUIT, false);
+            }
+        }
+
+    // LAYER 5 - Rooms expand from anchors
+    for (int x = 0; x < MAP_SIZE; x++)
+        for (int y = 0; y < MAP_SIZE; y++)
+        {
+            if (map->get_tile(x, y) == C::ANCHOR)
+            {
+                for (int x1 = x - 3; x1 <= x + 3; x1++)
+                    for (int y1 = y - 3; y1 <= y + 3; y1++)
+                        if (map->get_tile(x1, y1) != C::WALL)
+                        {
+                            if (x1 == x - 3 || x1 == x + 3 || y1 == y - 3 || y1 == y + 3)
+                                map->spawn(x1, y1, C::NUMBER, false).set_health(ms_twister() % 2 + 3);
+                            else if (x1 == x && y1 == y)
+                                map->spawn(x1, y1, C::SPAWNER, true, true);
+                            else
+                            {
+                                if(ms_twister() % 1000 < 200)
+                                    map->spawn(x1, y1, C::ANIMAL);
+                                else
+                                    map->spawn(x1, y1, ' ', false);
+                            }
+                        }
+            }
         }
 
     delete[] lab_inst;

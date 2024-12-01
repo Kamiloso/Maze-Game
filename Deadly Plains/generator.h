@@ -2,6 +2,8 @@
 
 #include <random>
 
-class Tile;
+#include "common.h"
 
-void generate(Tile** tiles, std::mt19937& ms_twister);
+class Map;
+
+void generate(Map* map, std::mt19937& ms_twister);

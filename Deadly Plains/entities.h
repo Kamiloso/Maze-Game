@@ -34,7 +34,7 @@ private:
 public:
 
     // Constructors
-    Tile(char _id = ' ', Coords bul_vect = { 0,0 }, bool by_player = false);
+    Tile(char _id = ' ', Coords bul_vect = {0,0}, bool by_player = false);
 
     // Getters
     char get_id() const;

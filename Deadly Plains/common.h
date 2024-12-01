@@ -2,18 +2,20 @@
 
 // --- CONSTANTS ---
 
-// Basic constants
+// Game name & version in primitive form
 const char FULL_VERSION[] = "Maze Game v.1.0";
-const int FRAME_MS = 50;            // Length of game frame
-const int VISION_RANGE = 11;        // Range of player vision
-const int SECTOR_SIZE = 5;          // Size of single sector
-const int LEVEL_RANGE = 33;         // Amount of sectors in each direction from spawn (excluding [0,0] sector)
-const int LABIRYNTH_WB = 50;        // Wall-breaking parameter for the labirynth generating alghorithm (in promiles)
-const int DAMAGE_SHOW_TIME = 5;     // Entity health visibility duration after taking damage (in frames)
-const int MAX_PLAYER_HEALTH = 5;    // Max health that player can have
-const int OVERFRUIT_EAT_SCORE = 5;  // Score for eating fruit while having max health
-const int PLAYER_SMELL = 20;        // Smell of the player for enemies
-const int ANIMAL_SMELL = 15;        // Smell of animals for monsters
+
+// Basic constants
+const int FRAME_MS = 50;             // Length of game frame
+const int VISION_RANGE = 11;         // Range of player vision
+const int SECTOR_SIZE = 5;           // Size of single sector
+const int LEVEL_RANGE = 33;          // Amount of sectors in each direction from spawn (excluding [0,0] sector)
+const int LABIRYNTH_WB = 50;         // Wall-breaking parameter for the labirynth generating alghorithm (in promiles)
+const int DAMAGE_SHOW_TIME = 5;      // Entity health visibility duration after taking damage (in frames)
+const int MAX_PLAYER_HEALTH = 5;     // Max health that player can have
+const int OVERFRUIT_EAT_SCORE = 5;   // Score for eating fruit while having max health
+const int PLAYER_SMELL = 20;         // Smell of the player for enemies
+const int ANIMAL_SMELL = 15;         // Smell of animals for monsters
 
 // Calculated constants
 const int SECTORS_IN_LINE = LEVEL_RANGE * 2 + 1;                // Number of sectors in one row or column
@@ -26,9 +28,6 @@ const int DISP_SIZE = 2 * VISION_RANGE + 3;                     // Size of displ
 const int DISPLAY_ROWS = DISP_SIZE;                             // Amount of display-array-2 rows
 const int DISPLAY_COLUMNS = DISP_SIZE * 2 - 1;                  // Amount of display-array-2 columns
 const int MIN_SNIPER_SMELL = PLAYER_SMELL;                      // Min smell of player, which the sniper can shoot at
-
-// Logical constants
-const bool MAGICAL_DAMAGE_IS_MAGENTA = false;
 
 // Common characters
 namespace C
@@ -46,6 +45,7 @@ namespace C
     const char SPAWNER = (char)0xF5;
     const char BULLET = 'o';
     const char FRUIT = (char)0xA2;
+    const char ANCHOR = '@'; // technical object
 
     // Walls
     const char WALL_VERTICAL = (char)0xBA;
