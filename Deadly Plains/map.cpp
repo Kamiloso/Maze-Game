@@ -198,6 +198,15 @@ char Map::get_tile(int x, int y) const
     else return '=';
 }
 
+// Returns reference to a tile in the specific position
+Tile& Map::get_tile_ref(int x, int y) const
+{
+    if (get_tile(x, y) != '=')
+        return tiles[x][y];
+    else
+        return tiles[0][0];
+}
+
 // Returns character and color ID, which will be displayed as a tile
 TileDisplay Map::get_tile_display(int x, int y) const
 {
@@ -247,7 +256,12 @@ TileDisplay Map::get_tile_display(int x, int y) const
             ch = C::INSECT_DRIED;
 
         if (tile.is_magical())
-            return { ch, COLOR::MAGENTA };
+        {
+            if(ch != C::BLOCK)
+                return { ch, COLOR::MAGENTA };
+            else
+                return { ch, COLOR::DARK_MAGENTA };
+        }
 
         if (ch == C::WALL ||
             ch == C::BLOCK)

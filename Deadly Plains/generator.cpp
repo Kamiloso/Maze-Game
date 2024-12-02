@@ -172,13 +172,47 @@ static int get_lar(int l)
         return on_sector * 2;
 }
 
+static void fill_wall(Map* map, int x, int y, bool vertical, string pattern = "-------")
+{
+    // TEMPORARY CONDITION, WILL BE FIXED IN THE FUTURE!
+    if (map->get_tile(x, y) == C::WALL ||
+        map->get_tile(x, y) == C::NUMBER ||
+        map->get_tile(x, y) == C::BLOCK)
+        return;
+
+    for (int i = -3; i <= 3; i++)
+    {
+        char ptc = pattern[i + 3];
+        int dx = vertical ? 0 : i;
+        int dy = vertical ? i : 0;
+        switch (ptc)
+        {
+        case ' ':
+            map->spawn(x + dx, y + dy, ' ', false);
+            break;
+        case '#':
+            map->spawn(x + dx, y + dy, C::WALL, false);
+            break;
+        case 'B':
+            map->spawn(x + dx, y + dy, C::BLOCK, false);
+            break;
+        case '-':
+            break;
+        default:
+            map->spawn(x + dx, y + dy, C::NUMBER, false).set_health(ptc - '0');
+            break;
+        }
+    }
+}
+
 // Pre-generates terrain on a given Map
 void generate(Map* map, std::mt19937& ms_twister)
 {
     string* lab_inst = labirynth_instructions(ms_twister);
 
-    const int BLIND_ROOM_APPEAR_CHANCE = 400; // (in promiles)
-    const int LINEAR_ROOM_APPEAR_CHANCE = 0; // (in promiles)
+    const int BLIND_ROOM_APPEAR_CHANCE = 200; // (in promiles)
+    const int LINEAR_ROOM_APPEAR_CHANCE = 200; // (in promiles)
+    const int UNDEFINED_ROOM_APPEAR_CHANCE = 200; // (in promiles)
 
     // LAYER 1 - Unbreakable walls (C::WALL)
     for (int x = 0; x < MAP_SIZE; x++)
@@ -224,18 +258,24 @@ void generate(Map* map, std::mt19937& ms_twister)
                 if (N + S + E + W == 1 && ms_twister() % 1000 < BLIND_ROOM_APPEAR_CHANCE)
                 {
                     // Blind route room
-                    Tile tile = map->spawn(x, y, C::ANCHOR, false);
+                    Tile& tile = map->spawn(x, y, C::ANCHOR, false);
                     if (N) tile.set_score(1);
                     else if (S) tile.set_score(2);
                     else if (E) tile.set_score(3);
                     else if (W) tile.set_score(4);
                 }
-                if (N + S + E + W == 2 && (N + S == 2 || E + W == 2) && ms_twister() % 1000 < LINEAR_ROOM_APPEAR_CHANCE)
+                else if (N + S + E + W == 2 && (N + S == 2 || E + W == 2) && ms_twister() % 1000 < LINEAR_ROOM_APPEAR_CHANCE)
                 {
                     // Linear route room
-                    Tile tile = map->spawn(x, y, C::ANCHOR, false);
+                    Tile& tile = map->spawn(x, y, C::ANCHOR, false);
                     if (N + S == 2) tile.set_score(5);
                     if (E + W == 2) tile.set_score(6);
+                }
+                else if(ms_twister() % 1000 < UNDEFINED_ROOM_APPEAR_CHANCE)
+                {
+                    // Undefined type of room
+                    Tile& tile = map->spawn(x, y, C::ANCHOR, false);
+                    tile.set_score(0);
                 }
 
                 continue;
@@ -254,14 +294,14 @@ void generate(Map* map, std::mt19937& ms_twister)
             {
                 int rnd = ms_twister() % 1000;
                 
-                if (rnd >= 0 && rnd <= 29)
+                if (rnd >= 0 && rnd <= 24)
                     map->spawn(x, y, C::BLOCK, false);
 
-                else if (rnd >= 30 && rnd <= 39)
-                    map->spawn(x, y, C::ANIMAL);
+                else if (rnd >= 25 && rnd <= 49)
+                    map->spawn(x, y, C::NUMBER, false).set_health(ms_twister() % 3 + 2);
 
-                else if (rnd >= 40 && rnd <= 41)
-                    map->spawn(x, y, C::FRUIT, false);
+                else if (rnd >= 50 && rnd <= 59)
+                    map->spawn(x, y, C::ANIMAL, true);
             }
         }
 
@@ -271,24 +311,102 @@ void generate(Map* map, std::mt19937& ms_twister)
         {
             if (map->get_tile(x, y) == C::ANCHOR)
             {
-                for (int x1 = x - 3; x1 <= x + 3; x1++)
-                    for (int y1 = y - 3; y1 <= y + 3; y1++)
-                        if (map->get_tile(x1, y1) != C::WALL)
+                Tile& tile = map->get_tile_ref(x, y);
+                int connection_mode = tile.get_score();
+                int rand_entity = ms_twister() % 1000;
+
+                // Choose room type
+                string chosen_room = "";
+                if (connection_mode >= 1 && connection_mode <= 4) // single gate
+                {
+                    if (rand_entity >= 0 && rand_entity <= 499) chosen_room = "animal_room";
+                    else if (rand_entity >= 500 && rand_entity <= 999) chosen_room = "monster_room";
+                }
+                else if (connection_mode >= 5 && connection_mode <= 6) // two linear gates
+                {
+                    if (rand_entity >= 0 && rand_entity <= 332) chosen_room = "fruit_storage";
+                    if (rand_entity >= 333 && rand_entity <= 665) chosen_room = "corridor";
+                    if (rand_entity >= 666 && rand_entity <= 999) chosen_room = "spawner_room";
+                }
+                else if (connection_mode == 0) // other configurations
+                {
+                    if (rand_entity >= 0 && rand_entity <= 499) chosen_room = "spawner_room";
+                    if (rand_entity >= 500 && rand_entity <= 999) chosen_room = "middle_square";
+                }
+
+                // Fill walls
+                string wall_pattern = "-------";
+                if (chosen_room == "animal_room")
+                {
+                    wall_pattern = "##BBB##";
+                }
+                else if (chosen_room == "monster_room")
+                {
+                    wall_pattern = "##111##";
+                }
+                else if (chosen_room == "fruit_storage" || chosen_room == "spawner_room")
+                {
+                    wall_pattern = "##   ##";
+                }
+                fill_wall(map, x - 3, y, true, wall_pattern);
+                fill_wall(map, x + 3, y, true, wall_pattern);
+                fill_wall(map, x, y - 3, false, wall_pattern);
+                fill_wall(map, x, y + 3, false, wall_pattern);
+                
+                // Create rooms
+                for (int x1 = x - 2; x1 <= x + 2; x1++)
+                    for (int y1 = y - 2; y1 <= y + 2; y1++)
+                    {
+                        if (chosen_room == "animal_room")
                         {
-                            if (x1 == x - 3 || x1 == x + 3 || y1 == y - 3 || y1 == y + 3)
-                                map->spawn(x1, y1, C::NUMBER, false).set_health(ms_twister() % 2 + 3);
-                            else if (x1 == x && y1 == y)
-                                map->spawn(x1, y1, C::SPAWNER, true, true);
+                            const int ANIMAL_ROOM_CHANCE = 220; // (promiles)
+                            if (ms_twister() % 1000 < ANIMAL_ROOM_CHANCE)
+                                map->spawn(x1, y1, C::ANIMAL, true);
                             else
-                            {
-                                if(ms_twister() % 1000 < 200)
-                                    map->spawn(x1, y1, C::ANIMAL);
-                                else
-                                    map->spawn(x1, y1, ' ', false);
-                            }
+                                map->spawn(x1, y1, ' ', false);
                         }
+                        else if (chosen_room == "monster_room")
+                        {
+                            const int MONSTER_ROOM_CHANCE = 160; // (promiles)
+                            if (ms_twister() % 1000 < MONSTER_ROOM_CHANCE)
+                                map->spawn(x1, y1, C::MONSTER, true);
+                            else
+                                map->spawn(x1, y1, ' ', false);
+                        }
+                        else if (chosen_room == "fruit_storage")
+                        {
+                            const int FRUIT_ROOM_CHANCE = 80; // (promiles)
+                            if (ms_twister() % 1000 < FRUIT_ROOM_CHANCE)
+                                map->spawn(x1, y1, C::FRUIT, false);
+                            else
+                                map->spawn(x1, y1, ' ', false);
+                        }
+                        else if (chosen_room == "spawner_room")
+                        {
+                            if (x1 == x && y1 == y)
+                                map->spawn(x1, y1, C::SPAWNER, true, true);
+                            else if (
+                                (x1 == x - 2 && y1 == y - 2) ||
+                                (x1 == x + 2 && y1 == y - 2) ||
+                                (x1 == x + 2 && y1 == y + 2) ||
+                                (x1 == x - 2 && y1 == y + 2)
+                                )
+                                map->spawn(x1, y1, C::BLOCK, false, true);
+                            else
+                                map->spawn(x1, y1, ' ', false);
+                        }
+                        else if (chosen_room == "middle_square")
+                        {
+                            if (x1 == x && y1 == y)
+                                map->spawn(x1, y1, C::NUMBER, false).set_health(ms_twister() % 10);
+                            else if (x1 >= x - 1 && x1 <= x + 1 && y1 >= y - 1 && y1 <= y + 1)
+                                map->spawn(x1, y1, C::WALL, false);
+                        }
+                    }
             }
         }
+
+    // LAYER 6 - Decorational gates in random positions
 
     delete[] lab_inst;
 }

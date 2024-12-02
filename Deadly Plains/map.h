@@ -52,6 +52,7 @@ public:
 
     // Map tile API
     char get_tile(int x, int y) const;
+    Tile& get_tile_ref(int x, int y) const;
     Tile& spawn(int x, int y, char type, bool has_ai = true, bool magical = false);
     void spawn_bullet(int x, int y, int dx, int dy, bool by_player, bool magical = false);
     bool damage(int x, int y, bool dmg_by_player = false); // returns true if tile was killed

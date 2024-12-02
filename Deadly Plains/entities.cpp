@@ -446,6 +446,21 @@ void Tile::spawn_insects(Map* map, mt19937& ms_twister, bool mag, int x, int y)
 // Spawns entities around a tile in the spawner style
 void Tile::spawner_activate(Map* map, mt19937& ms_twister, bool mag, int x, int y)
 {
+    // Remove purple blocks
+    Coords crd[] = {
+        {x - 2, y - 2},
+        {x + 2, y - 2},
+        {x - 2, y + 2},
+        {x + 2, y + 2}
+    };
+    for (int i = 0; i < 4; i++)
+    {
+        Tile& tile_ref = map->get_tile_ref(crd[i].x, crd[i].y);
+        if (tile_ref.is_magical() && tile_ref.get_id() == C::BLOCK)
+            map->remove(crd[i].x, crd[i].y);
+    }
+
+    // Actual code
     static const int SP_RADIUS = 2;
     const int x_min = x - SP_RADIUS;
     const int x_max = x + SP_RADIUS;
