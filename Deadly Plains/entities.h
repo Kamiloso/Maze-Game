@@ -22,6 +22,7 @@ private:
     char bullet_movement = '\0';
     bool shot_by_player = false;
     bool magical = false;
+    bool wall_flag = false;
 
     // Private methods
     void initialize_tile_values();
@@ -42,6 +43,7 @@ public:
     char get_score() const;
     bool was_shot_by_player() const;
     bool is_magical() const;
+    bool has_wall_flag() const;
     Coords get_bullet_movement() const;
     unsigned char is_dmg_visible() const; // 0:invisible, 1:damaged, 2:healed
 
@@ -51,6 +53,7 @@ public:
     bool heal_by_one(char max_health);
     bool damage_by_one();
     void make_magical();
+    void set_wall_flag();
     void execute_behaviour(Map* map, mt19937& ms_twister, int x, int y);
 
     // Static methods

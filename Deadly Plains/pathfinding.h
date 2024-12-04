@@ -18,7 +18,7 @@ class Pathfinding {
 private:
 
     // Private properties
-    int simulation_space[3][PATHFIND_TABLE_SIZE][PATHFIND_TABLE_SIZE];
+    int simulation_space[4][PATHFIND_TABLE_SIZE][PATHFIND_TABLE_SIZE];
 
 public:
 

@@ -8,6 +8,8 @@
 
 using namespace std;
 
+static string debug_info = "";
+
 // Sets text and background color of the console
 static void set_color(int text_color = 15, int bg_color = 0)
 {
@@ -126,7 +128,7 @@ void display(Map* map, const DisplayData disp_data)
 
 	// Final map display (temporary code)
 	cout << "\033[" << DISPLAY_ROWS << "A"; // Clear screen (fast)
-	cout << "\033[" << 3 << "A";
+	cout << "\033[" << 4 << "A";
 
 	int show_x = disp_data.center.x - (MAP_SIZE / 2);
 	int show_y = disp_data.center.y - (MAP_SIZE / 2);
@@ -141,6 +143,7 @@ void display(Map* map, const DisplayData disp_data)
 	cout << " | Difficulty: " << disp_data.difficulty << " | ";
 	cout << " Score: " << disp_data.score << " | ";
 	cout << " Health: " << disp_data.health << " |" << endl;
+	cout << " " << debug_info << endl;
 
 	display_array(pixels);
 }
@@ -169,4 +172,9 @@ void display_array(const TileDisplay pixels[DISPLAY_COLUMNS][DISPLAY_ROWS])
 		cout << "\n";
 	}
 	set_color();
+}
+
+void debug_log(string log)
+{
+	debug_info = log;
 }

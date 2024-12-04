@@ -1,5 +1,7 @@
 #pragma once
 
+#include <string>
+
 #include "common.h"
 
 class Map;
@@ -20,3 +22,4 @@ struct TileDisplay
 
 void display(Map* map, DisplayData ddt);
 void display_array(const TileDisplay pixels[DISPLAY_COLUMNS][DISPLAY_ROWS]);
+void debug_log(string log);

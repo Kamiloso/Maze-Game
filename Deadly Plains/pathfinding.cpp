@@ -29,8 +29,18 @@ static int id_from_mode(string mode)
 	if (mode == "melee") return 0;		// Normal melee attacker
 	if (mode == "predator") return 1;	// Melee attacker, which hunts for animals too
 	if (mode == "distance") return 2;	// Distance killer
+	if (mode == "spawner") return 3;	// Spawner silent observator
 
 	return 0; // default is melee
+}
+
+// Can see through this tile while pathfinding?
+static bool can_see_through(char type)
+{
+	return (
+		type == ' ' ||
+		type == C::BULLET
+	);
 }
 
 // Converts map coordinates to pathfind coordinates
@@ -54,7 +64,7 @@ static Coords pathfind_to_map_convert(Coords player, Coords entity)
 // Selects smell of a tile based on its type and smell array
 static int find_smell(vector<EntitySmell> smells, char tile)
 {
-	if (tile == ' ' || tile == C::BULLET)
+	if (can_see_through(tile))
 		return 0;
 
 	int lngt = smells.size();

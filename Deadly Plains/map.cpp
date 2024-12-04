@@ -110,6 +110,9 @@ void Map::frame_update()
 
             pathfinding.draw_pathmap(this, entities[0], { 
                 { C::PLAYER, PLAYER_SMELL } }, "distance");
+
+            pathfinding.draw_pathmap(this, entities[0], {
+                { C::PLAYER, SPAWNER_ACTIVATION_RANGE } }, "spawner");
         }
 
         if (entities[i].x != MAP_SIZE)

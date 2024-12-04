@@ -134,6 +134,7 @@
     <ClCompile Include="main.cpp" />
     <ClCompile Include="map.cpp" />
     <ClCompile Include="pathfinding.cpp" />
+    <ClCompile Include="rooms.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="display.h" />
@@ -143,6 +144,7 @@
     <ClInclude Include="map.h" />
     <ClInclude Include="common.h" />
     <ClInclude Include="pathfinding.h" />
+    <ClInclude Include="rooms.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

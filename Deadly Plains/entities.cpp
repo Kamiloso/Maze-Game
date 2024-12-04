@@ -143,6 +143,18 @@ bool Tile::was_shot_by_player() const
 	return shot_by_player;
 }
 
+// Sets the wall flag
+void Tile::set_wall_flag()
+{
+    wall_flag = true;
+}
+
+// Returns thether the wall flag exists
+bool Tile::has_wall_flag() const
+{
+    return wall_flag;
+}
+
 // Heals entity by one hp and returns whether it was healed
 bool Tile::heal_by_one(char max_health)
 {
@@ -400,6 +412,16 @@ void Tile::execute_behaviour(Map* map, mt19937& ms_twister, int x, int y)
                 map->remove(x, y, true);
         }
     }
+
+    // Spawner
+    if (id == C::SPAWNER)
+    {
+        Coords feels_player = map->pathfinding.pathfind(map->entities[0], { x,y }, ms_twister, "spawner");
+        if (feels_player != Coords{ 0,0 })
+        {
+            while (!map->damage(x, y, false));
+        }
+    }
 }
 
 // --- STATIC MEMBERS ---
@@ -446,20 +468,6 @@ void Tile::spawn_insects(Map* map, mt19937& ms_twister, bool mag, int x, int y)
 // Spawns entities around a tile in the spawner style
 void Tile::spawner_activate(Map* map, mt19937& ms_twister, bool mag, int x, int y)
 {
-    // Remove purple blocks
-    Coords crd[] = {
-        {x - 2, y - 2},
-        {x + 2, y - 2},
-        {x - 2, y + 2},
-        {x + 2, y + 2}
-    };
-    for (int i = 0; i < 4; i++)
-    {
-        Tile& tile_ref = map->get_tile_ref(crd[i].x, crd[i].y);
-        if (tile_ref.is_magical() && tile_ref.get_id() == C::BLOCK)
-            map->remove(crd[i].x, crd[i].y);
-    }
-
     // Actual code
     static const int SP_RADIUS = 2;
     const int x_min = x - SP_RADIUS;
@@ -476,8 +484,13 @@ void Tile::spawner_activate(Map* map, mt19937& ms_twister, bool mag, int x, int 
 
     for (int x1 = x_min; x1 <= x_max; x1++)
         for (int y1 = y_min; y1 <= y_max; y1++)
+        {
+            if (mag && map->get_tile(x1, y1) == C::BLOCK && map->get_tile_ref(x1, y1).is_magical())
+                map->spawn(x1, y1, C::BLOCK, false);
+
             if (map->get_tile(x1, y1) == ' ')
                 candidate_coords.push_back({ x1, y1 });
+        }
 
     std::shuffle(candidate_coords.begin(), candidate_coords.end(), ms_twister);
 
