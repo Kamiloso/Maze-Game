@@ -6,7 +6,7 @@
 const char FULL_VERSION[] = "Maze Game v.1.0";
 
 // Basic constants
-const int FRAME_MS = 50;                    // Length of game frame
+const int FRAME_MS = 45;                    // Length of game frame
 const int VISION_RANGE = 11;                // Range of player vision
 const int SECTOR_SIZE = 5;                  // Size of single sector
 const int LEVEL_RANGE = 33;                 // Amount of sectors in each direction from spawn (excluding [0,0] sector)
