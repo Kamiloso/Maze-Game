@@ -56,43 +56,13 @@ void empty_room(Map* map, int X, int Y, mt19937& ms_twister)
             int x = X + dx;
             int y = Y + dy;
 
-            if(dx != 0 && dy != 0) // to avoid errors allow to not erase anchor tile
+            if (dx != 0 && dy != 0) // to avoid errors allow to not erase anchor tile
                 map->spawn(x, y, ' ', false);
         }
 }
 
-// Creates an animal room
-void animal_room(Map* map, int X, int Y, mt19937& ms_twister)
-{
-    customizable_entity_room(map, X, Y, ms_twister, C::ANIMAL, 4, 70, true);
-}
-
-// Creates a monster room
-void monster_room(Map* map, int X, int Y, mt19937& ms_twister)
-{
-    customizable_entity_room(map, X, Y, ms_twister, C::MONSTER, 3, 60, true);
-}
-
-// Creates a room with a random number square
-void square_room(Map* map, int X, int Y, mt19937& ms_twister)
-{
-    for (int dx = -2; dx <= 2; dx++)
-        for (int dy = -2; dy <= 2; dy++)
-        {
-            int x = X + dx;
-            int y = Y + dy;
-
-            if (dx == 0 && dy == 0)
-                map->spawn(x, y, C::NUMBER, false).set_health(ms_twister() % 10);
-            else if (dx >= -1 && dx <= 1 && dy >= -1 && dy <= 1)
-                map->spawn(x, y, C::WALL, false);
-            else
-                map->spawn(x, y, ' ', false);
-        }
-}
-
-// Creates a corridor with fruits on sides
-void fruit_corridor(Map* map, int X, int Y, mt19937& ms_twister)
+// Creates a corridor
+static void corridor(Map* map, int X, int Y, mt19937& ms_twister, char type)
 {
     bool is_vertical = map->get_tile_ref(X, Y).get_score() == 5;
     vector<Coords> spawn_spaces;
@@ -133,47 +103,50 @@ void fruit_corridor(Map* map, int X, int Y, mt19937& ms_twister)
     for (int i = 0; i < lngt; i++)
     {
         Coords& crd = spawn_spaces[i];
-        map->spawn(crd.x, crd.y, C::FRUIT, false);
+        map->spawn(crd.x, crd.y, type, false);
     }
 }
 
-// Creates a decorational corridor
-void normal_corridor(Map* map, int X, int Y, mt19937& ms_twister)
+// Creates an animal room
+void animal_room(Map* map, int X, int Y, mt19937& ms_twister)
 {
-    bool is_vertical = map->get_tile_ref(X, Y).get_score() == 5;
-    int variant = ms_twister() % 1;
+    customizable_entity_room(map, X, Y, ms_twister, C::ANIMAL, 4, 70, true);
+}
 
+// Creates a monster room
+void monster_room(Map* map, int X, int Y, mt19937& ms_twister)
+{
+    customizable_entity_room(map, X, Y, ms_twister, C::MONSTER, 3, 60, true);
+}
+
+// Creates a room with a random number square
+void square_room(Map* map, int X, int Y, mt19937& ms_twister)
+{
     for (int dx = -2; dx <= 2; dx++)
         for (int dy = -2; dy <= 2; dy++)
         {
             int x = X + dx;
             int y = Y + dy;
 
-            char decision = ' ';
-
-            if (is_vertical)
-            {
-                if (variant == 0) // middle wall
-                {
-                    if (dx == 0 && dy >= -1 && dy <= 1)
-                        decision = C::WALL;
-                    else
-                        decision = ' ';
-                }
-            }
+            if (dx == 0 && dy == 0)
+                map->spawn(x, y, C::NUMBER, false).set_health(ms_twister() % 10);
+            else if (dx >= -1 && dx <= 1 && dy >= -1 && dy <= 1)
+                map->spawn(x, y, C::WALL, false);
             else
-            {
-                if (variant == 0) // middle wall
-                {
-                    if (dy == 0 && dx >= -1 && dx <= 1)
-                        decision = C::WALL;
-                    else
-                        decision = ' ';
-                }
-            }
-
-            map->spawn(x, y, decision, false);
+                map->spawn(x, y, ' ', false);
         }
+}
+
+// Creates a corridor with fruits on sides
+void fruit_corridor(Map* map, int X, int Y, mt19937& ms_twister)
+{
+    corridor(map, X, Y, ms_twister, C::FRUIT);
+}
+
+// Creates a corridor with blocks on sides
+void block_corridor(Map* map, int X, int Y, mt19937& ms_twister)
+{
+    corridor(map, X, Y, ms_twister, C::BLOCK);
 }
 
 // Creates a temple with a magic spawner

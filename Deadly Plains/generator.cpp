@@ -215,7 +215,7 @@ void generate(Map* map, std::mt19937& ms_twister)
     // room type when only 1s are set as the second factor.
     const int BLIND_ROOM_APPEAR_CHANCE = 23 * 18; // (in promiles)
     const int LINEAR_ROOM_APPEAR_CHANCE = 40 * 5; // (in promiles)
-    const int UNDEFINED_ROOM_APPEAR_CHANCE = 11 * 5; // (in promiles)
+    const int UNDEFINED_ROOM_APPEAR_CHANCE = 11 * 4; // (in promiles)
 
     // LAYER 1 - Unbreakable walls (C::WALL)
     for (int x = 0; x < MAP_SIZE; x++)
@@ -341,14 +341,14 @@ void generate(Map* map, std::mt19937& ms_twister)
                 }
                 else if (connection_mode >= 5 && connection_mode <= 6) // two linear gates
                 {
-                    if (rand_entity >= 0 && rand_entity <= 332) chosen_room = "fruit_corridor";
-                    if (rand_entity >= 333 && rand_entity <= 665) chosen_room = "normal_corridor";
-                    if (rand_entity >= 666 && rand_entity <= 999) chosen_room = "spawner_temple";
+                    if (rand_entity >= 0 && rand_entity <= 449) chosen_room = "fruit_corridor";
+                    if (rand_entity >= 450 && rand_entity <= 699) chosen_room = "block_corridor";
+                    if (rand_entity >= 700 && rand_entity <= 999) chosen_room = "spawner_temple";
                 }
                 else if (connection_mode == 0) // other configurations
                 {
-                    if (rand_entity >= 0 && rand_entity <= 499) chosen_room = "spawner_temple";
-                    if (rand_entity >= 500 && rand_entity <= 999) chosen_room = "block_temple";
+                    if (rand_entity >= 0 && rand_entity <= 749) chosen_room = "block_temple";
+                    if (rand_entity >= 750 && rand_entity <= 999) chosen_room = "spawner_temple";
                 }
 
                 // Configure rooms
@@ -371,8 +371,8 @@ void generate(Map* map, std::mt19937& ms_twister)
                     spawn_room = fruit_corridor;
                     wall_pattern = "##   ##";
                 }
-                if (chosen_room == "normal_corridor") {
-                    spawn_room = normal_corridor;
+                if (chosen_room == "block_corridor") {
+                    spawn_room = block_corridor;
                     wall_pattern = "##   ##";
                 }
                 if (chosen_room == "spawner_temple") {
@@ -392,9 +392,6 @@ void generate(Map* map, std::mt19937& ms_twister)
                 spawn_room(map, x, y, ms_twister);
             }
         }
-
-    // LAYER 6 - Decorational gates in random positions
-    // Please, finish this Mark, I'm very tired working on this part of code
 
     delete[] lab_inst;
 }

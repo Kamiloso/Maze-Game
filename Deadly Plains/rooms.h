@@ -16,7 +16,7 @@ void square_room(Map* map, int X, int Y, mt19937& ms_twister);
 
 // Build corridors
 void fruit_corridor(Map* map, int X, int Y, mt19937& ms_twister);
-void normal_corridor(Map* map, int X, int Y, mt19937& ms_twister);
+void block_corridor(Map* map, int X, int Y, mt19937& ms_twister);
 
 // Build temples
 void spawner_temple(Map* map, int X, int Y, mt19937& ms_twister);
