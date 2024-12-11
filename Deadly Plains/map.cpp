@@ -217,7 +217,16 @@ TileDisplay Map::get_tile_display(int x, int y) const
     {
         Tile& tile = tiles[x][y];
         char ch = tile.get_id();
+        char chr = ch;
         char health = tile.get_health();
+
+        if (ch == C::EGG)
+        {
+            if (tile.get_act_number() % 2 == 1)
+                ch = tile.get_egg_type();
+            else
+                ch = ' ';
+        }
 
         if (ch == ' ')
             return { ' ', COLOR::DARK_GRAY };
@@ -248,11 +257,11 @@ TileDisplay Map::get_tile_display(int x, int y) const
         if (ch == C::BULLET)
         {
             if (tile.is_magical())
-                return { ch, COLOR::MAGENTA };
+                return { chr, COLOR::MAGENTA };
             else if (tile.was_shot_by_player())
-                return { ch, COLOR::DARK_GREEN };
+                return { chr, COLOR::DARK_GREEN };
             else
-                return { ch, COLOR::DARK_RED };
+                return { chr, COLOR::DARK_RED };
         }
 
         if (ch == C::INSECT && tile.get_score() == 0)
@@ -261,23 +270,23 @@ TileDisplay Map::get_tile_display(int x, int y) const
         if (tile.is_magical())
         {
             if(ch != C::BLOCK)
-                return { ch, COLOR::MAGENTA };
+                return { chr, COLOR::MAGENTA };
             else
-                return { ch, COLOR::DARK_MAGENTA };
+                return { chr, COLOR::DARK_MAGENTA };
         }
 
         if (ch == C::WALL ||
             ch == C::BLOCK)
-            return { ch, COLOR::DARK_GRAY };
+            return { chr, COLOR::DARK_GRAY };
 
         if (ch == C::PLAYER)
-            return { ch, COLOR::GREEN };
+            return { chr, COLOR::GREEN };
 
         if (ch == C::ANIMAL)
-            return { ch, COLOR::YELLOW };
+            return { chr, COLOR::YELLOW };
 
         if (ch == C::FRUIT)
-            return { ch, COLOR::BLUE };
+            return { chr, COLOR::BLUE };
 
         if (ch == C::MONSTER ||
             ch == C::SNIPER ||
@@ -285,9 +294,9 @@ TileDisplay Map::get_tile_display(int x, int y) const
             ch == C::INSECT ||
             ch == C::INSECT_DRIED ||
             ch == C::SPAWNER)
-            return { ch, COLOR::RED };
+            return { chr, COLOR::RED };
 
-        return { ch, COLOR::LIGHT_GRAY };
+        return { chr, COLOR::LIGHT_GRAY };
     }
     else return { '=', COLOR::DARK_GRAY };
 }

@@ -90,6 +90,11 @@ void Tile::initialize_tile_values()
 	case C::NUMBER:
 		health = 4;
 		break;
+
+    case C::EGG:
+        health = 1;
+        break;
+
 	}
 }
 
@@ -149,6 +154,20 @@ void Tile::set_wall_flag()
     wall_flag = true;
 }
 
+// Initializes an egg
+void Tile::egg_initialize(char type, char hatch_time)
+{
+    id = C::EGG; // force being an egg
+    egg_type = type;
+    mark_as_acted(hatch_time);
+}
+
+// Returns egg type
+char Tile::get_egg_type() const
+{
+    return egg_type;
+}
+
 // Returns thether the wall flag exists
 bool Tile::has_wall_flag() const
 {
@@ -191,6 +210,12 @@ void Tile::mark_as_acted(char cooldown)
 bool Tile::can_act_now() const
 {
 	return action_cooldown == 0;
+}
+
+// Returns action_cooldown
+char Tile::get_act_number() const
+{
+    return action_cooldown;
 }
 
 // Checks if can act now
@@ -420,6 +445,20 @@ void Tile::execute_behaviour(Map* map, mt19937& ms_twister, int x, int y)
         if (feels_player != Coords{ 0,0 })
         {
             while (!map->damage(x, y, false));
+        }
+    }
+
+    // Egg
+    if (id == C::EGG)
+    {
+        if (frame % EGG_PERIOD == 0)
+        {
+            if (can_act_now())
+            {
+                // if will be summoning other static entities, modify has_ai input to increase performance
+                map->spawn(x, y, egg_type, (egg_type != C::FRUIT /* && ... */ ), magical);
+            }
+            else action_decrement();
         }
     }
 }

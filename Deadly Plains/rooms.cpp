@@ -47,20 +47,6 @@ static void customizable_entity_room(Map* map, int X, int Y, mt19937& ms_twister
     }
 }
 
-// Creates an empty room
-void empty_room(Map* map, int X, int Y, mt19937& ms_twister)
-{
-    for (int dx = -2; dx <= 2; dx++)
-        for (int dy = -2; dy <= 2; dy++)
-        {
-            int x = X + dx;
-            int y = Y + dy;
-
-            if (dx != 0 && dy != 0) // to avoid errors allow to not erase anchor tile
-                map->spawn(x, y, ' ', false);
-        }
-}
-
 // Creates a corridor
 static void corridor(Map* map, int X, int Y, mt19937& ms_twister, char type)
 {
@@ -105,6 +91,20 @@ static void corridor(Map* map, int X, int Y, mt19937& ms_twister, char type)
         Coords& crd = spawn_spaces[i];
         map->spawn(crd.x, crd.y, type, false);
     }
+}
+
+// Creates an empty room
+void empty_room(Map* map, int X, int Y, mt19937& ms_twister)
+{
+    for (int dx = -2; dx <= 2; dx++)
+        for (int dy = -2; dy <= 2; dy++)
+        {
+            int x = X + dx;
+            int y = Y + dy;
+
+            if (dx != 0 && dy != 0) // to avoid errors allow to not erase anchor tile
+                map->spawn(x, y, ' ', false);
+        }
 }
 
 // Creates an animal room

@@ -17,6 +17,8 @@ const int OVERFRUIT_EAT_SCORE = 5;          // Score for eating fruit while havi
 const int PLAYER_SMELL = 20;                // Smell of the player for enemies
 const int ANIMAL_SMELL = 15;                // Smell of animals for monsters
 const int SPAWNER_ACTIVATION_RANGE = 5;     // Range from player in which spawner will release entities automatically
+const int EGG_PERIOD = 3;                   // Duration of an egg frame in game frames
+const char EGG_HATCH_TIME = 8;              // Egg hatch duration in egg frames
 
 // Calculated constants
 const int SECTORS_IN_LINE = LEVEL_RANGE * 2 + 1;                // Number of sectors in one row or column
@@ -46,6 +48,7 @@ namespace C
     const char SPAWNER = (char)0xF5;
     const char BULLET = 'o';
     const char FRUIT = (char)0xA2;
+    const char EGG = '+';
     const char ANCHOR = '@'; // technical object
 
     // Walls

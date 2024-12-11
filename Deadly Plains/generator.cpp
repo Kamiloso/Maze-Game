@@ -318,6 +318,9 @@ void generate(Map* map, std::mt19937& ms_twister)
 
                 else if (rnd >= 200 && rnd <= 209)
                     map->spawn(x, y, C::ANIMAL, true);
+
+                else if (rnd >= 300 && rnd <= 329)
+                    map->spawn(x, y, C::EGG, true).egg_initialize(C::SNIPER, EGG_HATCH_TIME);
             }
         }
 

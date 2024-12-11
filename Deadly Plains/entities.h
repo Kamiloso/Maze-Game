@@ -17,6 +17,7 @@ private:
     char reward_score = 0;
     char action_cooldown = 0;
     char dmg_show_time = 0;
+    char egg_type = C::ANIMAL;
     bool dmg_show_from_dmg = false;
     bool initialization_flag = true;
     char bullet_movement = '\0';
@@ -28,8 +29,8 @@ private:
     void initialize_tile_values();
     bool check_initialization();
     void dmg_show_decrement();
-    void mark_as_acted(char cooldown);
     bool can_act_now() const;
+    void mark_as_acted(char cooldown);
     void action_decrement();
 
 public:
@@ -44,6 +45,8 @@ public:
     bool was_shot_by_player() const;
     bool is_magical() const;
     bool has_wall_flag() const;
+    char get_egg_type() const;
+    char get_act_number() const;
     Coords get_bullet_movement() const;
     unsigned char is_dmg_visible() const; // 0:invisible, 1:damaged, 2:healed
 
@@ -54,6 +57,7 @@ public:
     bool damage_by_one();
     void make_magical();
     void set_wall_flag();
+    void egg_initialize(char type, char hatch_time);
     void execute_behaviour(Map* map, mt19937& ms_twister, int x, int y);
 
     // Static methods
