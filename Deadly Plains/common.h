@@ -7,15 +7,19 @@ const char FULL_VERSION[] = "Maze Game v.1.0";
 
 // Basic constants
 const int FRAME_MS = 45;                    // Length of game frame
-const int VISION_RANGE = 11;                // Range of player vision
 const int SECTOR_SIZE = 5;                  // Size of single sector
 const int LEVEL_RANGE = 33;                 // Amount of sectors in each direction from spawn (excluding [0,0] sector)
 const int LABIRYNTH_WB = 50;                // Wall-breaking parameter for the labirynth generating alghorithm (in promiles)
 const int DAMAGE_SHOW_TIME = 5;             // Entity health visibility duration after taking damage (in frames)
 const int MAX_PLAYER_HEALTH = 5;            // Max health that player can have
 const int OVERFRUIT_EAT_SCORE = 5;          // Score for eating fruit while having max health
-const int PLAYER_SMELL = 20;                // Smell of the player for enemies
-const int ANIMAL_SMELL = 15;                // Smell of animals for monsters
+const int VISION_RANGE = 11;                // Range of player vision
+const int SIMULATION_DISTANCE = 22;         // Distance in which entity behaviour is simulated (has a square shape)
+const int DESPAWN_DISTANCE = 22;            // Distance outside which entities spawned with an egg despawn (has a square shape)
+const int PLAYER_SMELL = 26;                // Smell of the player for enemies
+const int ANIMAL_SMELL = 18;                // Smell of animals for monsters
+const int SPAWNING_SMELL_INIT = 22;         // Determines how far from the player entities can spawn
+const int SPAWNING_SMELL_MID = 10;          // Determines the maximum spawning smell where entities can spawn
 const int SPAWNER_ACTIVATION_RANGE = 5;     // Range from player in which spawner will release entities automatically
 const int EGG_PERIOD = 3;                   // Duration of an egg frame in game frames
 const char EGG_HATCH_TIME = 8;              // Egg hatch duration in egg frames
@@ -25,7 +29,6 @@ const int SECTORS_IN_LINE = LEVEL_RANGE * 2 + 1;                // Number of sec
 const int MAP_SIZE = SECTORS_IN_LINE * (SECTOR_SIZE + 1) + 1;   // Total number of tiles in one row or column (with borders)
 const int LAB_ARRAY_SIZE = SECTORS_IN_LINE * 2 - 1;             // Labirynth instructions array size
 const int TOTAL_SECTORS = SECTORS_IN_LINE * SECTORS_IN_LINE;    // Total sectors on the whole map
-const int SIMULATION_DISTANCE = VISION_RANGE * 2;               // Distance in which entity behaviour is simulated (has a square shape)
 const int PATHFIND_TABLE_SIZE = 2 * SIMULATION_DISTANCE + 1;    // Size of the array used for pathfinding
 const int DISP_SIZE = 2 * VISION_RANGE + 3;                     // Size of display-array-1
 const int DISPLAY_ROWS = DISP_SIZE;                             // Amount of display-array-2 rows
@@ -48,7 +51,7 @@ namespace C
     const char SPAWNER = (char)0xF5;
     const char BULLET = 'o';
     const char FRUIT = (char)0xA2;
-    const char EGG = '+';
+    const char EGG = '?';
     const char ANCHOR = '@'; // technical object
 
     // Walls

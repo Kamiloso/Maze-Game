@@ -7,6 +7,7 @@
 #include "input.h"
 #include "entities.h"
 #include "pathfinding.h"
+#include "spawning.h"
 
 using namespace std;
 
@@ -48,6 +49,8 @@ Map::Map(unsigned int seed)
     else
         public_seed = seed;
     ms_twister = std::mt19937{ public_seed };
+
+    spawning = Spawning(this, &pathfinding, &ms_twister);
 
     tiles = new Tile* [MAP_SIZE];
     for (int i = 0; i < MAP_SIZE; i++) {
@@ -140,6 +143,10 @@ void Map::frame_update()
     }
     delayed_kills.clear();
 
+    // Spawning
+    if (frame % 32 == 0)
+        spawning.frame_spawn(entities[0], spawning.get_difficulty(score));
+
     // Auto display map
     DisplayData ddt;
     ddt.center = entities[0];
@@ -183,8 +190,17 @@ void Map::entity_move(int x, int y)
     int dist_y = y - entities[0].y;
     if (dist_x < 0) dist_x *= -1;
     if (dist_y < 0) dist_y *= -1;
-    if (dist_x > SIMULATION_DISTANCE || dist_y > SIMULATION_DISTANCE)
+    
+    // Despawn egg entities if outside safe range
+    if (entity.was_egg_spawned() && (dist_x > DESPAWN_DISTANCE || dist_y > DESPAWN_DISTANCE)) {
+        remove(x, y, true);
         return;
+    }
+
+    // Ignore all entities outside simulation range
+    if (dist_x > SIMULATION_DISTANCE || dist_y > SIMULATION_DISTANCE) {
+        return;
+    }
 
     // Execute entity behaviour
     entity.execute_behaviour(this, ms_twister, x, y);
@@ -264,8 +280,11 @@ TileDisplay Map::get_tile_display(int x, int y) const
                 return { chr, COLOR::DARK_RED };
         }
 
-        if (ch == C::INSECT && tile.get_score() == 0)
+        if (ch == C::INSECT && tile.get_score() == 0 && tile.get_id() != C::EGG)
+        {
             ch = C::INSECT_DRIED;
+            chr = C::INSECT_DRIED;
+        }
 
         if (tile.is_magical())
         {

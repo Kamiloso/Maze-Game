@@ -241,7 +241,6 @@ void generate(Map* map, std::mt19937& ms_twister)
         }
 
     // LAYER 2 - Technical anchors (C::ANCHOR)
-    int rats[3]{};
     for (int x = 0; x < MAP_SIZE; x++)
         for (int y = 0; y < MAP_SIZE; y++)
         {
@@ -269,7 +268,6 @@ void generate(Map* map, std::mt19937& ms_twister)
                         else if (S) tile.set_score(2);
                         else if (E) tile.set_score(3);
                         else if (W) tile.set_score(4);
-                        rats[0]++;
                     }
                 }
                 else if (N + S + E + W == 2 && (N + S == 2 || E + W == 2))
@@ -280,7 +278,6 @@ void generate(Map* map, std::mt19937& ms_twister)
                         Tile& tile = map->spawn(x, y, C::ANCHOR, false);
                         if (N + S == 2) tile.set_score(5);
                         if (E + W == 2) tile.set_score(6);
-                        rats[1]++;
                     }
                 }
                 else
@@ -290,7 +287,6 @@ void generate(Map* map, std::mt19937& ms_twister)
                         // Any room with possible open corners
                         Tile& tile = map->spawn(x, y, C::ANCHOR, false);
                         tile.set_score(0);
-                        rats[2]++;
                     }
                 }
 
@@ -310,17 +306,14 @@ void generate(Map* map, std::mt19937& ms_twister)
             {
                 int rnd = ms_twister() % 1000;
                 
-                if (rnd >= 0 && rnd <= 24)
+                if (rnd >= 0 && rnd < 25)
                     map->spawn(x, y, C::BLOCK, false);
 
-                else if (rnd >= 100 && rnd <= 114)
+                else if (rnd >= 100 && rnd < 115)
                     map->spawn(x, y, C::NUMBER, false).set_health(ms_twister() % 3 + 2);
 
-                else if (rnd >= 200 && rnd <= 209)
-                    map->spawn(x, y, C::ANIMAL, true);
-
-                else if (rnd >= 300 && rnd <= 329)
-                    map->spawn(x, y, C::EGG, true).egg_initialize(C::SNIPER, EGG_HATCH_TIME);
+                else if (rnd >= 200 && rnd < 202)
+                    map->spawn(x, y, C::FRUIT, false);
             }
         }
 

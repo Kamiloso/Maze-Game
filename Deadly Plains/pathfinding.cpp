@@ -30,6 +30,7 @@ static int id_from_mode(string mode)
 	if (mode == "predator") return 1;	// Melee attacker, which hunts for animals too
 	if (mode == "distance") return 2;	// Distance killer
 	if (mode == "spawner") return 3;	// Spawner silent observator
+	if (mode == "SPAWNING") return 4;	// SPAWNING special mode
 
 	return 0; // default is melee
 }
@@ -249,6 +250,7 @@ Coords Pathfinding::pathfind_distance(Coords player, Coords entity, mt19937& ms_
 	return potential_destinations[0];
 }
 
+// Checks how good for shooting is the tile for distance attacker
 int Pathfinding::sniper_weight(Coords player, Coords point, int dx, int dy, string mode) const
 {
 	// Get pathfind table id
@@ -273,4 +275,30 @@ int Pathfinding::sniper_weight(Coords player, Coords point, int dx, int dy, stri
 	}
 
 	return best_found;
+}
+
+// Returns a list of tiles, which were marked in the pathfinding
+vector<TileList> Pathfinding::detect_tiles(Coords player, mt19937& ms_twister, string mode, int min_smell, bool randomize) const
+{
+	vector<TileList> return_list;
+
+	// Get pathfind table id
+	int id = id_from_mode(mode);
+
+	// Detect tiles
+	for (int x = 0; x < PATHFIND_TABLE_SIZE; x++)
+		for (int y = 0; y < PATHFIND_TABLE_SIZE; y++)
+		{
+			int tile_smell = simulation_space[id][x][y];
+			if (tile_smell > 0 && tile_smell <= min_smell)
+			{
+				Coords map_c = pathfind_to_map_convert(player, { x, y });
+				return_list.push_back({ {map_c.x, map_c.y}, tile_smell });
+			}
+		}
+
+	if(randomize)
+		std::shuffle(return_list.begin(), return_list.end(), ms_twister);
+
+	return return_list;
 }

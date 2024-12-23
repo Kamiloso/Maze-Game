@@ -17,13 +17,14 @@ private:
     char reward_score = 0;
     char action_cooldown = 0;
     char dmg_show_time = 0;
-    char egg_type = C::ANIMAL;
+    char egg_type = '\0';
     bool dmg_show_from_dmg = false;
     bool initialization_flag = true;
     char bullet_movement = '\0';
     bool shot_by_player = false;
     bool magical = false;
     bool wall_flag = false;
+    bool is_egg_spawned = false;
 
     // Private methods
     void initialize_tile_values();
@@ -45,6 +46,7 @@ public:
     bool was_shot_by_player() const;
     bool is_magical() const;
     bool has_wall_flag() const;
+    bool was_egg_spawned() const;
     char get_egg_type() const;
     char get_act_number() const;
     Coords get_bullet_movement() const;
@@ -57,6 +59,7 @@ public:
     bool damage_by_one();
     void make_magical();
     void set_wall_flag();
+    void set_egg_spawned();
     void egg_initialize(char type, char hatch_time);
     void execute_behaviour(Map* map, mt19937& ms_twister, int x, int y);
 

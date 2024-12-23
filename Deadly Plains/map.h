@@ -7,6 +7,7 @@
 #include "common.h"
 #include "pathfinding.h"
 #include "entities.h"
+#include "spawning.h"
 
 struct DisplayData;
 struct TileDisplay;
@@ -27,6 +28,7 @@ private:
     vector<Coords> entities;
     std::mt19937 ms_twister;
     Pathfinding pathfinding;
+    Spawning spawning;
     vector<KillDelayed> delayed_kills;
 
     // Private properties

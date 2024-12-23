@@ -94,7 +94,6 @@ void Tile::initialize_tile_values()
     case C::EGG:
         health = 1;
         break;
-
 	}
 }
 
@@ -117,7 +116,8 @@ void Tile::make_magical()
     if (!magical)
     {
         magical = true;
-        
+        if (id == C::EGG) return;
+
         // Magical entities are more powerful and give more score
         reward_score = magical_buff(reward_score, 127);
         health = magical_buff(health, 10);
@@ -154,6 +154,12 @@ void Tile::set_wall_flag()
     wall_flag = true;
 }
 
+// Marks entity as spawned from an egg
+void Tile::set_egg_spawned()
+{
+    is_egg_spawned = true;
+}
+
 // Initializes an egg
 void Tile::egg_initialize(char type, char hatch_time)
 {
@@ -172,6 +178,12 @@ char Tile::get_egg_type() const
 bool Tile::has_wall_flag() const
 {
     return wall_flag;
+}
+
+// Returns whether entity was spawned by an egg
+bool Tile::was_egg_spawned() const
+{
+    return is_egg_spawned;
 }
 
 // Heals entity by one hp and returns whether it was healed
@@ -456,7 +468,7 @@ void Tile::execute_behaviour(Map* map, mt19937& ms_twister, int x, int y)
             if (can_act_now())
             {
                 // if will be summoning other static entities, modify has_ai input to increase performance
-                map->spawn(x, y, egg_type, (egg_type != C::FRUIT /* && ... */ ), magical);
+                map->spawn(x, y, egg_type, (egg_type != C::FRUIT /* && ... */ ), magical).set_egg_spawned();
             }
             else action_decrement();
         }
