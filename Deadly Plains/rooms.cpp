@@ -116,7 +116,7 @@ void animal_room(Map* map, int X, int Y, mt19937& ms_twister)
 // Creates a monster room
 void monster_room(Map* map, int X, int Y, mt19937& ms_twister)
 {
-    customizable_entity_room(map, X, Y, ms_twister, C::MONSTER, 3, 60, true);
+    customizable_entity_room(map, X, Y, ms_twister, C::MONSTER, 2, 40, true);
 }
 
 // Creates a room with a random number square
@@ -129,7 +129,7 @@ void square_room(Map* map, int X, int Y, mt19937& ms_twister)
             int y = Y + dy;
 
             if (dx == 0 && dy == 0)
-                map->spawn(x, y, C::NUMBER, false).set_health(ms_twister() % 10);
+                map->spawn(x, y, C::NUMBER, false).set_health(6 + ms_twister() % 4);
             else if (dx >= -1 && dx <= 1 && dy >= -1 && dy <= 1)
                 map->spawn(x, y, C::WALL, false);
             else

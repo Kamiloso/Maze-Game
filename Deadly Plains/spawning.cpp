@@ -12,18 +12,34 @@ using namespace std;
 // ---------------------------------- //
 
 // Constructor
-Difficulty::Difficulty(string _name, int _max_entities, int _spawn_min, int _spawn_max)
+Difficulty::Difficulty(string _name, int _max_entities, int _spawn_min, int _spawn_max, int _max_blocks, int _terrain_deg_num)
 {
 	name = _name;
 	max_entities = _max_entities;
 	spawn_min = _spawn_min;
 	spawn_max = _spawn_max;
+	max_blocks = _max_blocks;
+	terrain_deg_num = _terrain_deg_num;
 }
 
 // Difficulty name getter
-string Difficulty::get_name()
+string Difficulty::get_name(bool get_full)
 {
-	return name;
+	if (get_full)
+		return name;
+	else
+		return name.substr(2);
+}
+
+// Max blocks getter
+int Difficulty::get_max_blocks()
+{
+	return max_blocks;
+}
+
+int Difficulty::get_terrain_deg_num()
+{
+	return terrain_deg_num;
 }
 
 // Adds spawn rule to the rules vector
@@ -143,54 +159,24 @@ Difficulty Spawning::get_difficulty(int score)
 {
 	if (score < 10)
 	{
-		auto dif = Difficulty("PEACE", 12, 1, 3);
+		auto dif = Difficulty("n 0 ANIMALS", 6, 1, 3);
 		dif.add_spawn_rule({ C::ANIMAL, 1 });
 		return dif;
 	}
-	else if (score < 60)
+	else if(score < 100)
 	{
-		auto dif = Difficulty("EASY MONSTERS", 12, 1, 3);
-		dif.add_spawn_rule({ C::ANIMAL, 1 });
-		dif.add_spawn_rule({ C::MONSTER, 1 });
-		return dif;
-	}
-	else if (score < 150)
-	{
-		auto dif = Difficulty("MELEE CHASE", 12, 1, 3);
-		dif.add_spawn_rule({ C::ANIMAL, 1 });
-		dif.add_spawn_rule({ C::MONSTER, 1 });
-		dif.add_spawn_rule({ C::INSECT, 2 });
-		return dif;
-	}
-	else if (score < 300)
-	{
-		auto dif = Difficulty("SHOOTING DANCE", 12, 1, 3);
-		dif.add_spawn_rule({ C::MONSTER, 1 });
-		dif.add_spawn_rule({ C::INSECT, 3 });
-		dif.add_spawn_rule({ C::SNIPER, 1 });
-		return dif;
-	}
-	else if (score < 400)
-	{
-		auto dif = Difficulty("BULLET HORROR", 12, 1, 3);
-		dif.add_spawn_rule({ C::INSECT, 1 });
-		dif.add_spawn_rule({ C::SNIPER, 1 });
-		return dif;
-	}
-	else if (score < 600)
-	{
-		auto dif = Difficulty("SUMMONERS", 12, 1, 3);
-		dif.add_spawn_rule({ C::MONSTER, 4 });
-		dif.add_spawn_rule({ C::INSECT, 5 });
+		auto dif = Difficulty("g 1 TRAINING AREA", 6, 1, 3);
+		dif.add_spawn_rule({ C::ANIMAL, 5 });
+		dif.add_spawn_rule({ C::MONSTER, 5 });
 		dif.add_spawn_rule({ C::INSECTOR, 1 });
 		return dif;
 	}
 	else
 	{
-		auto dif = Difficulty("ARMAGEDDON", 25, 3, 6);
-		dif.add_spawn_rule({ C::MONSTER, 3 });
-		dif.add_spawn_rule({ C::SNIPER, 3 });
-		dif.add_spawn_rule({ C::INSECT, 3 });
+		auto dif = Difficulty("p 2 THE APOCALYPSE", 25, 5, 10, /* B;N */ 0, 8);
+		dif.add_spawn_rule({ C::MONSTER, 5 });
+		dif.add_spawn_rule({ C::SNIPER, 5 });
+		dif.add_spawn_rule({ C::INSECT, 5 });
 		dif.add_spawn_rule({ C::INSECTOR, 1 });
 		return dif;
 	}

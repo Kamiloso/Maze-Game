@@ -111,7 +111,7 @@ void Map::frame_update()
             pathfinding.draw_pathmap(this, entities[0], { 
                 { C::PLAYER, PLAYER_SMELL }, { C::ANIMAL, ANIMAL_SMELL } }, "predator");
 
-            pathfinding.draw_pathmap(this, entities[0], { 
+            pathfinding.draw_pathmap(this, entities[0], {
                 { C::PLAYER, PLAYER_SMELL } }, "distance");
 
             pathfinding.draw_pathmap(this, entities[0], {
@@ -144,13 +144,65 @@ void Map::frame_update()
     delayed_kills.clear();
 
     // Spawning
+    current_difficulty = spawning.get_difficulty(score);
     if (frame % 32 == 0)
-        spawning.frame_spawn(entities[0], spawning.get_difficulty(score));
+        spawning.frame_spawn(entities[0], current_difficulty);
+
+    // Terrain degradation
+    if (frame % 8 == 0)
+    {
+        // Degradation header
+        vector<Coords> blocks_detected;
+        vector<Coords> numbers_detected;
+        for (int x = 0; x < MAP_SIZE; x++)
+            for (int y = 0; y < MAP_SIZE; y++)
+            {
+                if (get_tile(x, y) == C::BLOCK && !get_tile_ref(x, y).is_magical() && enclosed_by(x, y, C::WALL) < 3)
+                    blocks_detected.push_back({ x, y });
+
+                else if (get_tile(x, y) == C::NUMBER)
+                    numbers_detected.push_back({ x, y });
+            }
+
+        // Block degradation
+        const int CURRENT_MAX_BLOCKS = current_difficulty.get_max_blocks();
+        if (CURRENT_MAX_BLOCKS != -1 && blocks_detected.size() > CURRENT_MAX_BLOCKS)
+        {
+            std::shuffle(blocks_detected.begin(), blocks_detected.end(), ms_twister);
+            int b_det_size = blocks_detected.size();
+            if (b_det_size > 0) b_det_size = b_det_size / ANTI_TERRAIN_DEG + 1;
+            for (int i = 0; i < b_det_size; i++)
+                remove(blocks_detected[i].x, blocks_detected[i].y, true);
+        }
+
+        // Numbers degradation
+        const int ANTI_TERRAIN_DEG_NUM = current_difficulty.get_terrain_deg_num();
+        if (ANTI_TERRAIN_DEG_NUM != -1)
+        {
+            std::shuffle(numbers_detected.begin(), numbers_detected.end(), ms_twister);
+            int b_det_size = numbers_detected.size();
+            if (b_det_size > 0) b_det_size = b_det_size / ANTI_TERRAIN_DEG_NUM + 1;
+            for (int i = 0; i < b_det_size; i++)
+            {
+                int lx = numbers_detected[i].x;
+                int ly = numbers_detected[i].y;
+                if (damage(lx, ly, false) && enclosed_by(lx, ly, C::WALL) == 4)
+                {
+                    // Remove square room
+                    for (int tx = -1; tx <= 1; tx++)
+                        for (int ty = -1; ty <= 1; ty++)
+                        {
+                            remove(lx + tx, ly + ty, true);
+                        }
+                }
+            }
+        }
+    }
 
     // Auto display map
     DisplayData ddt;
     ddt.center = entities[0];
-    ddt.difficulty = (int)entities.size();
+    ddt.difficulty = 0;
     ddt.score = score;
     ddt.health = tiles[entities[0].x][entities[0].y].get_health();
     display(this, ddt);
@@ -215,6 +267,17 @@ char Map::get_tile(int x, int y) const
         return tile.get_id();
     }
     else return '=';
+}
+
+// Checks by how many tiles of a given type is a tile on given coordinates surrounded
+int Map::enclosed_by(int x, int y, char by_what) const
+{
+    int sum = 0;
+    if (get_tile(x + 1, y + 0) == by_what) sum++;
+    if (get_tile(x - 1, y + 0) == by_what) sum++;
+    if (get_tile(x + 0, y + 1) == by_what) sum++;
+    if (get_tile(x + 0, y - 1) == by_what) sum++;
+    return sum;
 }
 
 // Returns reference to a tile in the specific position
