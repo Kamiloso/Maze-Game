@@ -1,3 +1,4 @@
+#include <string>
 #include <vector>
 
 #include "spawning.h"
@@ -28,7 +29,7 @@ string Difficulty::get_name(bool get_full)
 	if (get_full)
 		return name;
 	else
-		return name.substr(2);
+		return name.substr(4);
 }
 
 // Max blocks getter
@@ -37,6 +38,7 @@ int Difficulty::get_max_blocks()
 	return max_blocks;
 }
 
+// Terrain deg num getter
 int Difficulty::get_terrain_deg_num()
 {
 	return terrain_deg_num;
@@ -157,15 +159,15 @@ void Spawning::frame_spawn(Coords player, Difficulty difficulty)
 // Returns difficulty based on current score
 Difficulty Spawning::get_difficulty(int score)
 {
-	if (score < 10)
+	if (score < get_next_score("01"))
 	{
-		auto dif = Difficulty("n 0 ANIMALS", 6, 1, 3);
+		auto dif = Difficulty("o01 ANIMAL PARADISE", 6, 1, 3);
 		dif.add_spawn_rule({ C::ANIMAL, 1 });
 		return dif;
 	}
-	else if(score < 100)
+	else if(score < get_next_score("02"))
 	{
-		auto dif = Difficulty("g 1 TRAINING AREA", 6, 1, 3);
+		auto dif = Difficulty("m02 TRAINING AREA", 6, 1, 3);
 		dif.add_spawn_rule({ C::ANIMAL, 5 });
 		dif.add_spawn_rule({ C::MONSTER, 5 });
 		dif.add_spawn_rule({ C::INSECTOR, 1 });
@@ -173,11 +175,19 @@ Difficulty Spawning::get_difficulty(int score)
 	}
 	else
 	{
-		auto dif = Difficulty("p 2 THE APOCALYPSE", 25, 5, 10, /* B;N */ 0, 8);
+		auto dif = Difficulty("n03 THE APOCALYPSE", 25, 5, 10, /* B;N */ 0, 8);
 		dif.add_spawn_rule({ C::MONSTER, 5 });
 		dif.add_spawn_rule({ C::SNIPER, 5 });
 		dif.add_spawn_rule({ C::INSECT, 5 });
 		dif.add_spawn_rule({ C::INSECTOR, 1 });
 		return dif;
 	}
+}
+
+// Returns score after which next phase starts
+int get_next_score(std::string dif_num)
+{
+	if (dif_num == "01") return 10;
+	if (dif_num == "02") return 100;
+	return -1;
 }

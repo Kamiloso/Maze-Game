@@ -3,19 +3,11 @@
 #include <windows.h>
 #include <sstream>
 
-#include "map.h"
 #include "display.h"
+#include "map.h"
+#include "console.h"
 
 using namespace std;
-
-static string debug_info = "";
-
-// Sets text and background color of the console
-static void set_color(int text_color = 15, int bg_color = 0)
-{
-	HANDLE hConsole = GetStdHandle(STD_OUTPUT_HANDLE);
-	SetConsoleTextAttribute(hConsole, text_color + (bg_color << 4));
-}
 
 // Checks whether given character represents wall
 static bool is_wall_type(char c)
@@ -26,12 +18,12 @@ static bool is_wall_type(char c)
 }
 
 // Displays the whole frame on a screen
-void display(Map* map, const DisplayData disp_data)
+void display(Map* map, DisplayData& disp_data)
 {
 	// Tile array declaration
-	TileDisplay tiles[DISP_SIZE][DISP_SIZE];
-	int x1 = disp_data.center.x - VISION_RANGE - 1;
-	int y1 = disp_data.center.y - VISION_RANGE - 1;
+	ConsoleChar tiles[DISP_SIZE][DISP_SIZE];
+	int x1 = disp_data.player_pos.x - VISION_RANGE - 1;
+	int y1 = disp_data.player_pos.y - VISION_RANGE - 1;
 	for (int x = 0; x < DISP_SIZE; x++)
 		for (int y = 0; y < DISP_SIZE; y++)
 		{
@@ -41,7 +33,7 @@ void display(Map* map, const DisplayData disp_data)
 	// Pixel array declaration
 	const int ROWS = DISPLAY_ROWS;
 	const int COLUMNS = DISPLAY_COLUMNS;
-	TileDisplay pixels[COLUMNS][ROWS];
+	ConsoleChar pixels[COLUMNS][ROWS];
 	for (int x = 0; x < COLUMNS; x++)
 		for (int y = 0; y < ROWS; y++)
 			pixels[x][y] = { ' ',COLOR::DARK_GRAY };
@@ -126,55 +118,63 @@ void display(Map* map, const DisplayData disp_data)
 				pixels[x][y].color = COLOR::LIGHT_GRAY;
 		}
 
-	// Final map display (temporary code)
-	cout << "\033[" << DISPLAY_ROWS << "A"; // Clear screen (fast)
-	cout << "\033[" << 4 << "A";
+	// Fill special characters to mark undefined pixels
+	fill_characters({ '?', 8 }, { 0, 0 }, { 48, 28 });
 
-	int show_x = disp_data.center.x - (MAP_SIZE / 2);
-	int show_y = disp_data.center.y - (MAP_SIZE / 2);
-	cout << " | Seed: " << map->get_seed() << " |" << endl;
-	cout << " | X: ";
-	cout.width(4);
-	cout << show_x;
-	cout << " | Y: ";
-	cout.width(4);
-	cout << show_y;
-	cout << " |" << endl;
-	cout << " | Difficulty: " << disp_data.difficulty << " | ";
-	cout << " Score: " << disp_data.score << " | ";
-	cout << " Health: " << disp_data.health << " |" << endl;
-	cout << " " << debug_info << endl;
-
-	display_array(pixels);
-}
-
-// Displays an array of pixels (tiles) on a screen
-void display_array(const TileDisplay pixels[DISPLAY_COLUMNS][DISPLAY_ROWS])
-{
-	char last_color = 255; // Set to something, which is never used
-
-	for (int y = DISPLAY_ROWS - 1; y >= 0; y--)
-	{
-		cout << " ";
-		for (int x = 0; x < DISPLAY_COLUMNS; x++)
+	// Gameplay space create
+	for(int x = 0 ; x < COLUMNS ; x++)
+		for (int y = 0; y < ROWS ; y++)
 		{
-			// Change color if differs
-			char current_color = pixels[x][y].color;
-			if (last_color != current_color)
-			{
-				set_color(current_color);
-				last_color = current_color;
-			}
-
-			// Display pixel
-			cout << pixels[x][y].character;
+			set_character(x, y + 4, pixels[x][ROWS - 1 - y]);
 		}
-		cout << "\n";
-	}
-	set_color();
-}
 
-void debug_log(string log)
-{
-	debug_info = log;
+	// Gameplay contures create
+	fill_characters({ C::LINE_HORIZONTAL }, { 0, 0 }, { 48, 0 });
+	fill_characters({ C::LINE_HORIZONTAL }, { 0, 2 }, { 48, 2 });
+	fill_characters({ C::LINE_VERTICAL }, { 0, 1 }, { 48, 1 });
+	fill_characters({ C::LINE_VERTICAL }, { 0, 3 }, { 48, 3 });
+	set_character(0, 0, { C::LINE_SE });
+	set_character(0, 2, { C::LINE_NOT_W });
+	set_character(0, 4, { C::LINE_NOT_W });
+	set_character(48, 0, { C::LINE_SW });
+	set_character(48, 2, { C::LINE_NOT_E });
+	set_character(48, 4, { C::LINE_NOT_E });
+
+	// Gameplay menu create
+	stringstream ss;
+
+	ss << disp_data.score << " / " << disp_data.next_score;
+	insert_text("SCORE: ", create_text_space({ 1, 3 }, 27), 25);
+	insert_text(ss.str(), {9, 3}, 18);
+
+	insert_text("PHASE " + disp_data.difficulty_id + ": ", create_text_space({1, 1}, 27), 25);
+	insert_text(disp_data.difficulty_name, { 12, 1 }, 15, disp_data.difficulty_color);
+
+	ss.str(""); ss.clear();
+	ss << "X: " << (disp_data.player_pos.x - MAP_SIZE / 2);
+	insert_text(ss.str(), create_text_space({29, 1}, 9), 7);
+
+	ss.str("");  ss.clear();
+	ss << "Y: " << (disp_data.player_pos.y - MAP_SIZE / 2);
+	insert_text(ss.str(), create_text_space({39, 1}, 9), 7);
+	
+	insert_text("HEALTH: ", create_text_space({ 29, 3 }, 19), 17);
+	for (int i = 1; i <= 5; i++)
+	{
+		if(i <= disp_data.health)
+			set_character(36 + i * 2, 3, { C::FRUIT, COLOR::BLUE });
+		else
+			set_character(36 + i * 2, 3, { C::FRUIT, COLOR::DARK_GRAY });
+	}
+
+	// Gameplay menu contures create
+	set_character(38, 0, { C::LINE_NOT_N });
+	set_character(38, 2, { C::LINE_NOT_S });
+	set_character(28, 0, { C::LINE_NOT_N });
+	set_character(28, 2, { C::LINE });
+	set_character(28, 4, { C::LINE_NOT_S });
+
+	// Reload console
+	naturalize_lines();
+	reload_screen();
 }

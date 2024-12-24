@@ -127,6 +127,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="console.cpp" />
     <ClCompile Include="display.cpp" />
     <ClCompile Include="entities.cpp" />
     <ClCompile Include="generator.cpp" />
@@ -138,6 +139,7 @@
     <ClCompile Include="spawning.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="console.h" />
     <ClInclude Include="display.h" />
     <ClInclude Include="entities.h" />
     <ClInclude Include="generator.h" />

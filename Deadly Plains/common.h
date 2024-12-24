@@ -68,6 +68,7 @@ namespace C
     const char WALL_NOT_W = (char)0xCC;
 
     // Lines
+    const char LINE = (char)0xC5;
     const char LINE_VERTICAL = (char)0xB3;
     const char LINE_HORIZONTAL = (char)0xC4;
     const char LINE_NE = (char)0xC0;
@@ -83,22 +84,22 @@ namespace C
 // Console color IDs
 namespace COLOR
 {
-    const char BLACK = 0;
-    const char DARK_BLUE = 1;
-    const char DARK_GREEN = 2;
-    const char DARK_CYAN = 3;
-    const char DARK_RED = 4;
-    const char DARK_MAGENTA = 5;
-    const char DARK_YELLOW = 6;
-    const char LIGHT_GRAY = 7;
-    const char DARK_GRAY = 8;
-    const char BLUE = 9;
-    const char GREEN = 10;
-    const char CYAN = 11;
-    const char RED = 12;
-    const char MAGENTA = 13;
-    const char YELLOW = 14;
-    const char WHITE = 15;
+    const char BLACK = 0;           // a
+    const char DARK_BLUE = 1;       // b
+    const char DARK_GREEN = 2;      // c
+    const char DARK_CYAN = 3;       // d
+    const char DARK_RED = 4;        // e
+    const char DARK_MAGENTA = 5;    // f
+    const char DARK_YELLOW = 6;     // g
+    const char LIGHT_GRAY = 7;      // h
+    const char DARK_GRAY = 8;       // i
+    const char BLUE = 9;            // j
+    const char GREEN = 10;          // k
+    const char CYAN = 11;           // l
+    const char RED = 12;            // m
+    const char MAGENTA = 13;        // n
+    const char YELLOW = 14;         // o
+    const char WHITE = 15;          // p
 }
 
 // --- STRUCTS ---

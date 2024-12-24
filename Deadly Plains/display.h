@@ -8,18 +8,13 @@ class Map;
 
 struct DisplayData
 {
-	Coords center = { 0,0 };
-	int difficulty = 0;
+	Coords player_pos = { 0,0 };
+	std::string difficulty_id = "00";
+	std::string difficulty_name = "UNKNOWN";
+	unsigned char difficulty_color = 0x07;
+	char health = 0;
 	int score = 0;
-	int health = 0;
+	int next_score = 0;
 };
 
-struct TileDisplay
-{
-	char character = ' ';
-	char color = COLOR::LIGHT_GRAY;
-};
-
-void display(Map* map, DisplayData ddt);
-void display_array(const TileDisplay pixels[DISPLAY_COLUMNS][DISPLAY_ROWS]);
-void debug_log(string log);
+void display(Map* map, DisplayData& disp_data);

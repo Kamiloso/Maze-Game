@@ -10,7 +10,7 @@
 #include "spawning.h"
 
 struct DisplayData;
-struct TileDisplay;
+struct ConsoleChar;
 
 using namespace std;
 
@@ -50,7 +50,7 @@ public:
     void frame_update();
     int get_frame() const;
     unsigned int get_seed() const;
-    TileDisplay get_tile_display(int x, int y) const;
+    ConsoleChar get_tile_display(int x, int y) const;
     int end() const;
 
     // Map tile API

@@ -8,6 +8,7 @@
 #include "entities.h"
 #include "pathfinding.h"
 #include "spawning.h"
+#include "console.h"
 
 using namespace std;
 
@@ -200,12 +201,15 @@ void Map::frame_update()
     }
 
     // Auto display map
-    DisplayData ddt;
-    ddt.center = entities[0];
-    ddt.difficulty = 0;
-    ddt.score = score;
-    ddt.health = tiles[entities[0].x][entities[0].y].get_health();
-    display(this, ddt);
+    DisplayData disp_data{};
+    disp_data.player_pos = entities[0];
+    disp_data.difficulty_name = current_difficulty.get_name(false);
+    disp_data.difficulty_id = current_difficulty.get_name(true).substr(1, 2);
+    disp_data.difficulty_color = current_difficulty.get_name(true)[0] - 'a';
+    disp_data.score = score;
+    disp_data.next_score = get_next_score(disp_data.difficulty_id);
+    disp_data.health = get_tile_ref(entities[0].x, entities[0].y).get_health();
+    display(this, disp_data);
 
     // Frame number increase
     frame++;
@@ -290,7 +294,7 @@ Tile& Map::get_tile_ref(int x, int y) const
 }
 
 // Returns character and color ID, which will be displayed as a tile
-TileDisplay Map::get_tile_display(int x, int y) const
+ConsoleChar Map::get_tile_display(int x, int y) const
 {
     if (x >= 0 && x < MAP_SIZE && y >= 0 && y < MAP_SIZE)
     {

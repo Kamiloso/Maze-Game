@@ -21,7 +21,7 @@ struct SpawnRule
 class Difficulty
 {
 public:
-	Difficulty(string _name = "0 NONE", int _max_entities = 0, int _spawn_min = 0, int _spawn_max = 0, int _max_blocks = -1, int _terrain_deg_num = -1);
+	Difficulty(string _name = "h00 NONE", int _max_entities = 0, int _spawn_min = 0, int _spawn_max = 0, int _max_blocks = -1, int _terrain_deg_num = -1);
 	string get_name(bool get_full = false);
 	int get_max_blocks();
 	int get_terrain_deg_num();
@@ -50,3 +50,5 @@ private:
 	Pathfinding* pathf_ptr;
 	mt19937* ms_twister_ptr;
 };
+
+int get_next_score(std::string dif_num);
