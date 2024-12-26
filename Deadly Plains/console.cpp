@@ -89,16 +89,6 @@ Coords create_text_space(Coords start, int size)
 	return { start.x + 1, start.y };
 }
 
-// Connects all line characters with each other
-void naturalize_lines()
-{
-	for (int x = 0; x < CONSOLE_SIZE_X; x++)
-		for (int y = 0; y < CONSOLE_SIZE_X; y++)
-		{
-			;
-		}
-}
-
 // Clears screen and displays all characters
 void reload_screen()
 {

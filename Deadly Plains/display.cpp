@@ -164,7 +164,7 @@ void display(Map* map, DisplayData& disp_data)
 		if(i <= disp_data.health)
 			set_character(36 + i * 2, 3, { C::FRUIT, COLOR::BLUE });
 		else
-			set_character(36 + i * 2, 3, { C::FRUIT, COLOR::DARK_GRAY });
+			set_character(36 + i * 2, 3, { C::BULLET, COLOR::DARK_GRAY});
 	}
 
 	// Gameplay menu contures create
@@ -175,6 +175,5 @@ void display(Map* map, DisplayData& disp_data)
 	set_character(28, 4, { C::LINE_NOT_S });
 
 	// Reload console
-	naturalize_lines();
 	reload_screen();
 }

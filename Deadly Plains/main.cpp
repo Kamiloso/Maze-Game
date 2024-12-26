@@ -5,16 +5,9 @@
 #include <sstream>
 
 #include "map.h"
+#include "console.h"
 
 using namespace std;
-
-static void hide_cursor() {
-    cout << "\x1B[?25l";
-}
-
-static void show_cursor() {
-    cout << "\x1B[?25h";
-}
 
 static void title_debug_info(string info) {
     if (info != "")
@@ -29,7 +22,7 @@ static unsigned int Last_seed = 0;
 
 static void play(unsigned int seed = 0)
 {
-    hide_cursor();
+    cursor_set_active(false);
     Map* map = new Map(seed);
     int next_frame_wait = 0;
     while (map->end() == -1)
@@ -58,8 +51,8 @@ static void play(unsigned int seed = 0)
     Last_seed = map->get_seed();
     delete map;
 
-    system("cls");
-    show_cursor();
+    clear_screen();
+    cursor_set_active(true);
 
     // Inform about the end
     if (got_score > Highscore) {
@@ -81,7 +74,7 @@ static void ask_seed_and_play()
     unsigned int seed = 0;
     string str_seed;
 
-    system("cls");
+    clear_screen();
     cout << "What seed do you want to set? (0 - last)" << endl;
     cout << "> "; cin >> str_seed;
 
@@ -114,7 +107,7 @@ int main()
     // Main menu
     char pressedKey;
     do {
-        system("cls");
+        clear_screen();
         
         repeat_char(C::LINE_HORIZONTAL, 21); cout << endl;
         

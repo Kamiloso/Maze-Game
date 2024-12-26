@@ -6,6 +6,7 @@
 #include "generator.h"
 #include "entities.h"
 #include "rooms.h"
+#include "console.h"
 #include "map.h"
 
 using namespace std;
@@ -75,7 +76,7 @@ static void labirynth_walls_break(string* spaces, std::mt19937& ms_twister, int 
 // Returns instructions how to create labirynth. WARNING: Array pointer must be removed!
 static string* labirynth_instructions(std::mt19937& ms_twister)
 {
-    system("cls");
+    clear_screen();
     cout << "Generating map..." << endl;
 
     // Labirynth initialization
@@ -157,7 +158,7 @@ static string* labirynth_instructions(std::mt19937& ms_twister)
         }
     }
 
-    system("cls");
+    clear_screen();
     return spaces;
 }
 
