@@ -50,12 +50,19 @@ void reset_inputs()
     get_async_direction_state('A');
 
     GetAsyncKeyState(VK_SPACE);
+    GetAsyncKeyState(VK_ESCAPE);
 }
 
 // Checks if space was pressed recently
 bool is_space_pressed()
 {
     return GetAsyncKeyState(VK_SPACE);
+}
+
+// Checks if escape was pressed recently
+bool is_escape_pressed()
+{
+    return GetAsyncKeyState(VK_ESCAPE);
 }
 
 // Returns vector of player movement

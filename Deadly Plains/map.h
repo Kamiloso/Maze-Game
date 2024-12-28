@@ -8,6 +8,7 @@
 #include "pathfinding.h"
 #include "entities.h"
 #include "spawning.h"
+#include "difficulty.h"
 
 struct DisplayData;
 struct ConsoleChar;
@@ -39,6 +40,7 @@ private:
 
     // Private methods
     void entity_move(int x, int y);
+    void frame_display();
 
 public:
 

@@ -9,6 +9,9 @@
 #include "pathfinding.h"
 #include "spawning.h"
 #include "console.h"
+#include "difficulty.h"
+#include "menu.h"
+#include "main.h"
 
 using namespace std;
 
@@ -49,6 +52,10 @@ Map::Map(unsigned int seed)
         public_seed = std::random_device{}();
     else
         public_seed = seed;
+
+    if (public_seed == 0)
+        public_seed = 1;
+
     ms_twister = std::mt19937{ public_seed };
 
     spawning = Spawning(this, &pathfinding, &ms_twister);
@@ -73,9 +80,33 @@ Map::~Map()
 // Executes game frame
 void Map::frame_update()
 {
-    // Clean input getting before starting gameplay
-    if(frame==0)
+    // Clean input getting and screen before starting gameplay
+    if (frame == 0)
+    {
+        allow_frame_delay();
         reset_inputs();
+        clear_screen();
+    }
+
+    // Game pause
+    if (is_escape_pressed())
+    {
+        allow_frame_delay();
+        int pause_decision = pause_menu(score);
+        if (pause_decision == 1)
+        {
+            reset_inputs();
+            clear_screen();
+            frame_display();
+            return;
+        }
+        else
+        {
+            entities.clear();
+            set_kill("YOU GAVE UP");
+            return;
+        }
+    }
 
     // !!! DON'T TOUCH THIS VARIABLE (vector size may be modified during loops execution) !!!
     int lngt = entities.size();
@@ -200,6 +231,14 @@ void Map::frame_update()
         }
     }
 
+    // Frame end
+    frame_display();
+    frame++;
+}
+
+// Displays the frame
+void Map::frame_display()
+{
     // Auto display map
     DisplayData disp_data{};
     disp_data.player_pos = entities[0];
@@ -210,9 +249,6 @@ void Map::frame_update()
     disp_data.next_score = get_next_score(disp_data.difficulty_id);
     disp_data.health = get_tile_ref(entities[0].x, entities[0].y).get_health();
     display(this, disp_data);
-
-    // Frame number increase
-    frame++;
 }
 
 // Returns frame number

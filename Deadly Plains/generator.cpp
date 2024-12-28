@@ -1,6 +1,5 @@
 #include <random>
 #include <vector>
-#include <iostream>
 
 #include "common.h"
 #include "generator.h"
@@ -158,7 +157,6 @@ static string* labirynth_instructions(std::mt19937& ms_twister)
         }
     }
 
-    clear_screen();
     return spaces;
 }
 

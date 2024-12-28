@@ -1,34 +1,75 @@
 ﻿#include <iostream>
-#include <windows.h>
+#include <thread>
 #include <chrono>
-#include <conio.h>
 #include <sstream>
 
 #include "map.h"
 #include "console.h"
+#include "menu.h"
+#include "main.h"
 
 using namespace std;
 
-static void title_debug_info(string info) {
+static int highscore = 0;
+static unsigned int last_seed = 0;
+static bool frame_could_be_delayed = false;
+static string kill_info = "";
+
+// Sets the console title to game version + additional debug info
+static void title_debug_info(string info)
+{
     if (info != "")
-        info = "title " + (string)FULL_VERSION + " ; " + info;
+        info = "title " + string(FULL_VERSION) + " ; " + info;
     else
-        info = "title " + (string)FULL_VERSION;
+        info = "title " + string(FULL_VERSION);
     system(info.c_str());
 }
 
-static unsigned int Highscore = 0;
-static unsigned int Last_seed = 0;
+// Highscore setter
+void set_highscore(int _highscore)
+{
+    highscore = _highscore;
+}
 
+// Highscore getter
+int get_highscore()
+{
+    return highscore;
+}
+
+// Last seed setter
+void set_last_seed(unsigned int _last_seed)
+{
+    last_seed = _last_seed;
+}
+
+// Last seed getter
+unsigned int get_last_seed()
+{
+    return last_seed;
+}
+
+// Ignore next info about frame delay
+void allow_frame_delay()
+{
+    frame_could_be_delayed = true;
+}
+
+// Sets the kill info
+void set_kill(string info)
+{
+    kill_info = info;
+}
+
+// Starts gameplay with a given (or random when empty) seed
 static void play(unsigned int seed = 0)
 {
-    cursor_set_active(false);
     Map* map = new Map(seed);
     int next_frame_wait = 0;
     while (map->end() == -1)
     {
         // Game loop
-        Sleep(next_frame_wait);
+        std::this_thread::sleep_for(std::chrono::milliseconds(next_frame_wait));
         
         auto clock_before = chrono::steady_clock::now();
         map->frame_update();
@@ -37,6 +78,12 @@ static void play(unsigned int seed = 0)
         auto milliseconds = std::chrono::duration_cast<std::chrono::milliseconds>(clock_after - clock_before).count();
         next_frame_wait = FRAME_MS - static_cast<int>(milliseconds);
         
+        if (frame_could_be_delayed)
+        {
+            next_frame_wait = FRAME_MS;
+            frame_could_be_delayed = false;
+        }
+
         if (next_frame_wait < 0)
         {
             stringstream ss;
@@ -48,96 +95,48 @@ static void play(unsigned int seed = 0)
     }
     title_debug_info("");
     int got_score = map->end();
-    Last_seed = map->get_seed();
+    set_last_seed(map->get_seed());
     delete map;
 
-    clear_screen();
-    cursor_set_active(true);
-
-    // Inform about the end
-    if (got_score > Highscore) {
-        Highscore = got_score;
-        cout << "New record!" << endl;
+    if (kill_info == "") {
+        you_died_menu(got_score);
     }
-    cout << "You died with score: " << got_score << endl;
-    cout << "Press ENTER to continue..." << endl;
-
-    char pressedKey;
-    do {
-        pressedKey = _getch();
-    } while (pressedKey != '\r' && pressedKey != '\n');
+    else {
+        you_died_menu(got_score, kill_info);
+        kill_info = "";
+    }
 }
 
-static void ask_seed_and_play()
+// Asks user for seed and starts gameplay
+static void play_set_seed()
 {
-    try_again:
-    unsigned int seed = 0;
-    string str_seed;
-
-    clear_screen();
-    cout << "What seed do you want to set? (0 - last)" << endl;
-    cout << "> "; cin >> str_seed;
-
-    try {
-        unsigned int seed_try = stoi(str_seed);
-        if (seed_try != 0) seed = seed_try;
-        else seed = Last_seed;
-    }
-    catch(exception) {
-        cout << "There was an error reading seed! Try again." << endl;
-        system("pause");
-        goto try_again;
-    }
-
-    play(seed);
+    unsigned int seed = seed_menu();
+    if (seed != 0)
+        play(seed);
+    else
+        return;
 }
 
-static void repeat_char(char c, int amount)
-{
-    for (int i = 0; i < amount; i++)
-        cout << c;
-}
-
+// The main function from which the whole program begins
 int main()
 {
     // Program initialization
     title_debug_info("");
     std::ios::sync_with_stdio(false); // removes compatibility with printf() from C, be careful and only use cout!
+    cursor_set_active(false);
 
     // Main menu
-    char pressedKey;
+    int ask_result;
     do {
-        clear_screen();
-        
-        repeat_char(C::LINE_HORIZONTAL, 21); cout << endl;
-        
-        cout << " " << C::WALL_SE; repeat_char(C::WALL_HORIZONTAL, 17); cout << C::WALL_SW << endl;
-        cout << " " << C::WALL_VERTICAL << " " << (string)FULL_VERSION << " " << C::WALL_VERTICAL << endl;
-        cout << " " << C::WALL_NE; repeat_char(C::WALL_HORIZONTAL, 17); cout << C::WALL_NW << endl;
-        
-        repeat_char(C::LINE_HORIZONTAL, 21); cout << endl;
-
-        cout << " Highscore: " << Highscore << endl;
-        if (Last_seed != 0) cout << " Last seed: " << Last_seed << endl;
-        else cout << " Last seed: none" << endl;
-
-        repeat_char(C::LINE_HORIZONTAL, 21); cout << endl;
-
-        cout << " 1 - Play on random seed" << endl;
-        cout << " 2 - Play on set seed" << endl;
-        cout << " 3 - Quit" << endl;
-
-        repeat_char(C::LINE_HORIZONTAL, 21); cout << endl;
-
-        pressedKey = _getch();
-
-        switch (pressedKey)
+        ask_result = main_menu();
+        switch (ask_result)
         {
-        case '1': play(); break;
-        case '2': ask_seed_and_play(); break;
+            case 1: play(); break;
+            case 2: play_set_seed(); break;
+            case 3: instructions_menu(); break;
+            case 4: phases_menu(); break;
         }
-
-    } while (pressedKey != '3');
+    } while (ask_result != 5);
 
     // Program ending
     return 0;

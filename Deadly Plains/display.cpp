@@ -119,7 +119,7 @@ void display(Map* map, DisplayData& disp_data)
 		}
 
 	// Fill special characters to mark undefined pixels
-	fill_characters({ '?', 8 }, { 0, 0 }, { 48, 28 });
+	fill_all_characters({ '?',8 });
 
 	// Gameplay space create
 	for(int x = 0 ; x < COLUMNS ; x++)
@@ -175,5 +175,5 @@ void display(Map* map, DisplayData& disp_data)
 	set_character(28, 4, { C::LINE_NOT_S });
 
 	// Reload console
-	reload_screen();
+	reload_screen(true);
 }

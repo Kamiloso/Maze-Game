@@ -8,9 +8,9 @@
 static ConsoleChar console_characters[CONSOLE_SIZE_X][CONSOLE_SIZE_Y]{};
 
 // Sets text and background color for the console output
-static void set_color(unsigned char text_color = 0x07)
+void set_color(unsigned char text_color)
 {
-	static unsigned char last_argument = 0x07;
+	static unsigned char last_argument = COLOR::LIGHT_GRAY;
 	if (text_color != last_argument)
 	{
 		last_argument = text_color;
@@ -20,9 +20,12 @@ static void set_color(unsigned char text_color = 0x07)
 }
 
 // Moves cursor up certain number of lines
-static void move_cursor_up(unsigned int lines = CONSOLE_SIZE_Y)
+void move_cursor_up(int lines)
 {
-	std::cout << "\033[" << lines << "A";
+	if (lines == -1)
+		std::cout << "\033[H";
+	else
+		std::cout << "\033[" << lines << "A";
 }
 
 // Sets the cursor to be visible or not
@@ -34,10 +37,10 @@ void cursor_set_active(bool set_active)
 		std::cout << "\x1B[?25l";
 }
 
-// Clears the screen without CLS
+// Clears the screen with CLS
 void clear_screen()
 {
-	std::cout << "\033[2J\033[H";
+	system("cls");
 }
 
 // Returns the character from a specific position
@@ -89,17 +92,47 @@ Coords create_text_space(Coords start, int size)
 	return { start.x + 1, start.y };
 }
 
+// Sets all characters to a given type
+void fill_all_characters(ConsoleChar fill_char)
+{
+	fill_characters(fill_char, { 0, 0 }, { CONSOLE_SIZE_X - 1, CONSOLE_SIZE_Y - 1 });
+}
+
+// Creates a box made of lines
+void make_linebox(Coords start, Coords end)
+{
+	set_character(start.x, start.y, { C::LINE_SE });
+	set_character(end.x, start.y, { C::LINE_SW });
+	set_character(start.x, end.y, { C::LINE_NE });
+	set_character(end.x, end.y, { C::LINE_NW });
+
+	for (int x = start.x + 1; x < end.x; x++)
+	{
+		set_character(x, start.y, { C::LINE_HORIZONTAL });
+		set_character(x, end.y, { C::LINE_HORIZONTAL });
+	}
+
+	for (int y = start.y + 1; y < end.y; y++)
+	{
+		set_character(start.x, y, { C::LINE_VERTICAL });
+		set_character(end.x, y, { C::LINE_VERTICAL });
+	}
+}
+
 // Clears screen and displays all characters
-void reload_screen()
+void reload_screen(bool do_offset)
 {
 	move_cursor_up();
 
 	for (int y = 0; y < CONSOLE_SIZE_Y; y++)
 	{
+		if(do_offset)
+			std::cout << " ";
 		for (int x = 0; x < CONSOLE_SIZE_X; x++)
 		{
 			ConsoleChar con_char = get_character(x, y);
-			set_color(con_char.color);
+			if(con_char.character != ' ')
+				set_color(con_char.color);
 			std::cout << con_char.character;
 		}
 		std::cout << std::endl;

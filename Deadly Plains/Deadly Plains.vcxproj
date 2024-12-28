@@ -128,24 +128,31 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="console.cpp" />
+    <ClCompile Include="difficulty.cpp" />
     <ClCompile Include="display.cpp" />
     <ClCompile Include="entities.cpp" />
+    <ClCompile Include="files.cpp" />
     <ClCompile Include="generator.cpp" />
     <ClCompile Include="input.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="map.cpp" />
+    <ClCompile Include="menu.cpp" />
     <ClCompile Include="pathfinding.cpp" />
     <ClCompile Include="rooms.cpp" />
     <ClCompile Include="spawning.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="console.h" />
+    <ClInclude Include="difficulty.h" />
     <ClInclude Include="display.h" />
     <ClInclude Include="entities.h" />
+    <ClInclude Include="files.h" />
     <ClInclude Include="generator.h" />
     <ClInclude Include="input.h" />
+    <ClInclude Include="main.h" />
     <ClInclude Include="map.h" />
     <ClInclude Include="common.h" />
+    <ClInclude Include="menu.h" />
     <ClInclude Include="pathfinding.h" />
     <ClInclude Include="rooms.h" />
     <ClInclude Include="spawning.h" />

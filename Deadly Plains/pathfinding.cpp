@@ -278,9 +278,9 @@ int Pathfinding::sniper_weight(Coords player, Coords point, int dx, int dy, stri
 }
 
 // Returns a list of tiles, which were marked in the pathfinding
-vector<TileList> Pathfinding::detect_tiles(Coords player, mt19937& ms_twister, string mode, int min_smell, bool randomize) const
+vector<TileSmell> Pathfinding::detect_tiles(Coords player, mt19937& ms_twister, string mode, int min_smell, bool randomize) const
 {
-	vector<TileList> return_list;
+	vector<TileSmell> return_list;
 
 	// Get pathfind table id
 	int id = id_from_mode(mode);
