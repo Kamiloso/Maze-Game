@@ -1,6 +1,7 @@
 #include <string>
 #include <fstream>
 #include <windows.h>
+#include <sstream>
 
 #include "files.h"
 
@@ -70,8 +71,9 @@ string read_from_file(wstring file_name)
     wifstream file(path);
     if (file.is_open())
     {
-        wstring contents;
-        file >> contents;
+        wstringstream buffer;
+        buffer << file.rdbuf();
+        wstring contents = buffer.str();
         file.close();
         return wstring_to_string(contents);
     }

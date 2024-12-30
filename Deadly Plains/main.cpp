@@ -76,11 +76,15 @@ void load_all_data()
         else reading_mode++;
     }
 
-    highscore = int_parse_any_string(str_highscore.c_str());
-    last_seed = int_parse_any_string(str_last_seed.c_str());
-
-    if (highscore < 0)
+    //highscore is [int]
+    unsigned int pre_highscore = int_parse_any_string(str_highscore.c_str());
+    if (pre_highscore <= static_cast<unsigned int>(std::numeric_limits<int>::max()))
+        highscore = pre_highscore;
+    else
         highscore = 0;
+
+    // last_seed is [unsigned int]
+    last_seed = int_parse_any_string(str_last_seed.c_str());
 }
 
 // Saves all game data to file
