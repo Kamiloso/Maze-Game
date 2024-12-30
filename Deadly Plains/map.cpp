@@ -175,7 +175,7 @@ void Map::frame_update()
     delayed_kills.clear();
 
     // Spawning
-    current_difficulty = spawning.get_difficulty(score);
+    current_difficulty = get_difficulty(score);
     if (frame % 32 == 0)
         spawning.frame_spawn(entities[0], current_difficulty);
 
@@ -245,11 +245,11 @@ void Map::frame_display()
     // Auto display map
     DisplayData disp_data{};
     disp_data.player_pos = entities[0];
-    disp_data.difficulty_name = current_difficulty.get_name(false);
-    disp_data.difficulty_id = current_difficulty.get_name(true).substr(1, 2);
-    disp_data.difficulty_color = current_difficulty.get_name(true)[0] - 'a';
+    disp_data.difficulty_name = current_difficulty.get_name().str;
+    disp_data.difficulty_id = current_difficulty.get_id_str();
+    disp_data.difficulty_color = current_difficulty.get_name().color;
     disp_data.score = score;
-    disp_data.next_score = get_next_score(disp_data.difficulty_id);
+    disp_data.next_score = current_difficulty.get_next_score();
     disp_data.health = get_tile_ref(entities[0].x, entities[0].y).get_health();
     display(this, disp_data);
 }

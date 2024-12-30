@@ -69,38 +69,51 @@ void Spawning::frame_spawn(Coords player, Difficulty difficulty)
 	}
 }
 
-// Returns difficulty based on current score
-Difficulty Spawning::get_difficulty(int score)
+// Returns all difficulties
+vector<Difficulty> get_difficulties()
 {
-	if (score < get_next_score("01"))
-	{
-		auto dif = Difficulty("o01 ANIMAL PARADISE", 6, 1, 3);
-		dif.add_spawn_rule({ C::ANIMAL, 1 });
-		return dif;
-	}
-	else if(score < get_next_score("02"))
-	{
-		auto dif = Difficulty("m02 TRAINING AREA", 6, 1, 3);
-		dif.add_spawn_rule({ C::ANIMAL, 5 });
-		dif.add_spawn_rule({ C::MONSTER, 5 });
-		dif.add_spawn_rule({ C::INSECTOR, 1 });
-		return dif;
-	}
-	else
-	{
-		auto dif = Difficulty("n03 THE APOCALYPSE", 25, 5, 10, /* B;N */ 0, 8);
-		dif.add_spawn_rule({ C::MONSTER, 5 });
-		dif.add_spawn_rule({ C::SNIPER, 5 });
-		dif.add_spawn_rule({ C::INSECT, 5 });
-		dif.add_spawn_rule({ C::INSECTOR, 1 });
-		return dif;
-	}
+	vector<Difficulty> arr(16);
+	for (int i = 0; i < 16; i++)
+		arr[i] = Difficulty(i);
+
+	Difficulty* D = &arr[00];
+
+	D = &arr[01];
+	D->set_name({ "ANIMAL PARADISE", COLOR::YELLOW });
+	D->configure_accessibility(0, 9);
+	D->configure_spawning(6, 1, 3, {
+		{ C::ANIMAL, 1 }
+		});
+
+	D = &arr[02];
+	D->set_name({ "SECOND PHASE", COLOR::RED });
+	D->configure_accessibility(10, -1);
+	D->configure_spawning(6, 1, 3, {
+		{ C::MONSTER, 1 }
+		});
+
+	return arr;
 }
 
-// Returns score after which next phase starts
-int get_next_score(std::string dif_num)
+// Returns difficulty based on its ID
+Difficulty get_difficulty_by_id(int id)
 {
-	if (dif_num == "01") return 10;
-	if (dif_num == "02") return 100;
-	return -1;
+	vector<Difficulty> arr = get_difficulties();
+
+	if (id >= 1 && id <= 15)
+		return arr[id];
+	else
+		return arr[0];
+}
+
+// Returns difficulty based on current score
+Difficulty get_difficulty(int score)
+{
+	vector<Difficulty> arr = get_difficulties();
+	for (int i = 1; i <= 15; i++)
+	{
+		if (arr[i].is_active(score))
+			return arr[i];
+	}
+	return arr[0];
 }

@@ -80,9 +80,18 @@ void insert_text(std::string text, Coords start, int max_length, unsigned char c
 		lngt = max_length;
 
 	for (int i = 0; i < lngt; i++)
-	{
 		set_character(start.x + i, start.y, { text[i], color });
-	}
+}
+
+// Inserts some text into a given space with allignment to the right (still cuts the right side if doesn't fit)
+void insert_text_backwards(std::string text, Coords end, int max_length, unsigned char color)
+{
+	int lngt = text.length();
+	if (lngt > max_length)
+		lngt = max_length;
+
+	for (int i = 0; i < lngt; i++)
+		set_character(end.x - i, end.y, { text[lngt - 1 - i], color });
 }
 
 // Creates a free area for a text and returns start coordinates for a text (max_length should be (size - 2))
@@ -119,22 +128,27 @@ void make_linebox(Coords start, Coords end)
 	}
 }
 
-// Clears screen and displays all characters
-void reload_screen(bool do_offset)
+void print_part_of_screen(int first_ln, int last_ln, int offset_size)
 {
-	move_cursor_up();
-
-	for (int y = 0; y < CONSOLE_SIZE_Y; y++)
+	for (int y = first_ln; y <= last_ln; y++)
 	{
-		if(do_offset)
-			std::cout << " ";
+		if (offset_size > 0)
+			std::cout << std::string(offset_size, ' ');
+
 		for (int x = 0; x < CONSOLE_SIZE_X; x++)
 		{
 			ConsoleChar con_char = get_character(x, y);
-			if(con_char.character != ' ')
+			if (con_char.character != ' ')
 				set_color(con_char.color);
 			std::cout << con_char.character;
 		}
 		std::cout << std::endl;
 	}
+}
+
+// Clears screen and displays all characters
+void reload_screen(int offset_size)
+{
+	move_cursor_up();
+	print_part_of_screen(0, CONSOLE_SIZE_Y - 1, offset_size);
 }

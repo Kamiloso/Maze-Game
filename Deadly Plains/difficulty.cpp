@@ -1,41 +1,88 @@
+#include <sstream>
+
 #include "difficulty.h"
 
 // Constructor
-Difficulty::Difficulty(string _name, int _max_entities, int _spawn_min, int _spawn_max, int _max_blocks, int _terrain_deg_num)
+Difficulty::Difficulty(int _id)
+{
+	id = _id;
+}
+
+// Sets difficulty name
+void Difficulty::set_name(ColoredString _name)
 {
 	name = _name;
+}
+
+// Sets minimum and maximum score
+void Difficulty::configure_accessibility(int _score_min, int _score_max)
+{
+	score_min = _score_min;
+	score_max = _score_max;
+}
+
+// Configures all spawning rules
+void Difficulty::configure_spawning(int _max_entities, int _spawn_min, int _spawn_max, vector<SpawnRule> _spawn_rules)
+{
 	max_entities = _max_entities;
 	spawn_min = _spawn_min;
 	spawn_max = _spawn_max;
+	spawn_rules = _spawn_rules;
+}
+
+// Configures terrain degradation rules (if present in difficulty)
+void Difficulty::configure_degradation(int _max_blocks, int _terrain_deg_num)
+{
 	max_blocks = _max_blocks;
 	terrain_deg_num = _terrain_deg_num;
 }
 
-// Difficulty name getter
-string Difficulty::get_name(bool get_full)
+// ID getter
+int Difficulty::get_id()
 {
-	if (get_full)
-		return name;
+	return id;
+}
+
+// ID getter in string form
+string Difficulty::get_id_str()
+{
+	stringstream ss;
+	if (id < 10) ss << "0" << id;
+	else ss << id;
+	return ss.str();
+}
+
+// Name getter
+ColoredString Difficulty::get_name()
+{
+	return name;
+}
+
+// Checks if difficulty is active with the given score
+bool Difficulty::is_active(int score)
+{
+	return (score >= score_min && (score <= score_max || score_to_str(score_max) == "INF"));
+}
+
+// Score min getter
+int Difficulty::get_score_min()
+{
+	return score_min;
+}
+
+// Score max getter
+int Difficulty::get_score_max()
+{
+	return score_max;
+}
+
+// Deducts score_min of the next difficulty based on score_max of the current
+int Difficulty::get_next_score()
+{
+	if (score_to_str(score_max) != "INF")
+		return score_max + 1;
 	else
-		return name.substr(4);
-}
-
-// Max blocks getter
-int Difficulty::get_max_blocks()
-{
-	return max_blocks;
-}
-
-// Terrain deg num getter
-int Difficulty::get_terrain_deg_num()
-{
-	return terrain_deg_num;
-}
-
-// Adds spawn rule to the rules vector
-void Difficulty::add_spawn_rule(SpawnRule rule)
-{
-	spawn_rules.push_back(rule);
+		return -1;
 }
 
 // Returns list of entities to spawn
@@ -79,4 +126,29 @@ vector<SpawnRule> Difficulty::pick_entities(int current_entities, mt19937& ms_tw
 	}
 
 	return return_vector;
+}
+
+// Max blocks getter
+int Difficulty::get_max_blocks()
+{
+	return max_blocks;
+}
+
+// Terrain deg num getter
+int Difficulty::get_terrain_deg_num()
+{
+	return terrain_deg_num;
+}
+
+// --- Static methods ---
+
+// Converts score into a string form (converts -1 into INF)
+string Difficulty::score_to_str(int score)
+{
+	if (score == -1)
+		return "INF";
+
+	stringstream ss;
+	ss << score;
+	return ss.str();
 }

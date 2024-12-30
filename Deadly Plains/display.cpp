@@ -143,14 +143,13 @@ void display(Map* map, DisplayData& disp_data)
 	// Gameplay menu create
 	stringstream ss;
 
-	ss << disp_data.score << " / " << disp_data.next_score;
 	insert_text("SCORE: ", create_text_space({ 1, 3 }, 27), 25);
-	insert_text(ss.str(), {9, 3}, 18);
+	insert_text(Difficulty::score_to_str(disp_data.score) + " / " + Difficulty::score_to_str(disp_data.next_score), {9, 3}, 18);
 
 	insert_text("PHASE " + disp_data.difficulty_id + ": ", create_text_space({1, 1}, 27), 25);
 	insert_text(disp_data.difficulty_name, { 12, 1 }, 15, disp_data.difficulty_color);
 
-	ss.str(""); ss.clear();
+	ss.str("");  ss.clear();
 	ss << "X: " << (disp_data.player_pos.x - MAP_SIZE / 2);
 	insert_text(ss.str(), create_text_space({29, 1}, 9), 7);
 
@@ -175,5 +174,5 @@ void display(Map* map, DisplayData& disp_data)
 	set_character(28, 4, { C::LINE_NOT_S });
 
 	// Reload console
-	reload_screen(true);
+	reload_screen(1);
 }

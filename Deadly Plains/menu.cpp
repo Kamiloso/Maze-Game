@@ -5,7 +5,7 @@
 #include "console.h"
 #include "menu.h"
 #include "main.h"
-#include "difficulty.h"
+#include "spawning.h"
 
 // Displays the menu header
 static void display_header(unsigned char info_flags = 0b001, int score = -1)
@@ -190,29 +190,75 @@ void phases_menu()
 {
 	clear_screen();
 	display_header(0b101);
-	display_menu({
-		" |----|------------------|-------------|",
-		" | ID |    GAME PHASE    |    SCORE    |",
-		" |----|------------------|-------------|",
-		});
 
+	// Clear all previous screen characters (printing using console.h)
+	fill_all_characters({ ' ' });
+
+	// Horizontal lines
+	fill_characters({ C::LINE_HORIZONTAL }, { 0,0 }, { 38,0 });
+	fill_characters({ C::LINE_HORIZONTAL }, { 0,2 }, { 38,2 });
+	fill_characters({ C::LINE_HORIZONTAL }, { 0,18 }, { 38,18 });
+
+	// Vertical lines
+	fill_characters({ C::LINE_VERTICAL }, { 0,0 }, { 0,18 });
+	fill_characters({ C::LINE_VERTICAL }, { 5,0 }, { 5,18 });
+	fill_characters({ C::LINE_VERTICAL }, { 24,0 }, { 24,18 });
+	fill_characters({ C::LINE_VERTICAL }, { 38,0 }, { 38,18 });
+
+	// Corners y = 0
+	set_character(0, 0, { C::LINE_SE });
+	set_character(5, 0, { C::LINE_NOT_N });
+	set_character(24, 0, { C::LINE_NOT_N });
+	set_character(38, 0, { C::LINE_SW });
+
+	// Corners y = 2
+	set_character(0, 2, { C::LINE_NOT_W });
+	set_character(5, 2, { C::LINE });
+	set_character(24, 2, { C::LINE });
+	set_character(38, 2, { C::LINE_NOT_E });
+
+	// Corners y = 18
+	set_character(0, 18, { C::LINE_NE });
+	set_character(5, 18, { C::LINE_NOT_S });
+	set_character(24, 18, { C::LINE_NOT_S });
+	set_character(38, 18, { C::LINE_NW });
+
+	// Text inserting
+	insert_text("ID", { 2,1 }, 2);
+	insert_text("GAME PHASE", { 10,1 }, 10);
+	insert_text("SCORE", { 29,1 }, 5);
+	fill_characters({ '-' }, { 31,3 }, { 31,17 });
 	for (int i = 1; i <= 15; i++)
 	{
-		cout << "  | ";
-		if (i < 10) cout << "0" << i;
-		else cout << i;
-		cout << " | ";
-		cout.width(16);
-		set_color(COLOR::RED);
-		if (i > 7) set_color(COLOR::DARK_RED);
-		cout << "TRAINING AREA";
-		set_color();
-		cout << " | 0000 - 0000 |";
-		cout << endl;
-	}
-	cout << "  |----|------------------|-------------|" << endl;
-	cout << endl;
+		Difficulty difficulty = get_difficulty_by_id(i);
 
+		ColoredString name;
+		string str_score_min, str_score_max;
+		if (get_highscore() >= difficulty.get_score_min() && get_last_seed() != 0) // Known difficulty
+		{
+			name = difficulty.get_name();
+			str_score_min = Difficulty::score_to_str(difficulty.get_score_min());
+			str_score_max = Difficulty::score_to_str(difficulty.get_score_max());
+		}
+		else // Unknown difficulty
+		{
+			name = { "????????????????", COLOR::DARK_GRAY };
+			str_score_min = "?";
+			str_score_max = "?";
+		}
+
+		// ID numbers
+		insert_text(difficulty.get_id_str(), { 2,2 + i }, 2);
+		
+		// PHASE names
+		insert_text_backwards(name.str, { 22,2 + i }, 16, name.color);
+
+		// SCORE info
+		insert_text_backwards(str_score_min, { 29,2 + i }, 4);
+		insert_text(str_score_max, { 33,2 + i }, 4);
+	}
+
+	print_part_of_screen(0, 19, 2);
 	any_key_delay();
 }
 

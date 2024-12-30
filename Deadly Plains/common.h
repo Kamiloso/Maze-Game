@@ -22,9 +22,9 @@ const int SPAWNING_SMELL_INIT = 22;         // Determines how far from the playe
 const int SPAWNING_SMELL_MID = 10;          // Determines the maximum spawning smell where entities can spawn
 const int SPAWNER_ACTIVATION_RANGE = 5;     // Range from player in which spawner will release entities automatically
 const int ANTI_TERRAIN_DEG = 10;            // Parameter, which slows down terrain degradation (removal of blocks)
-const int SAVING_PERIOD = 100;              // How often data is saved to file (in frames), 100 ~ around 5 seconds
 const int EGG_PERIOD = 3;                   // Duration of an egg frame in game frames
 const char EGG_HATCH_TIME = 8;              // Egg hatch duration in egg frames
+const int SAVING_PERIOD = 100;              // How often data is saved to file (in frames), 100 ~ around 5 seconds
 
 // Calculated constants
 const int SECTORS_IN_LINE = LEVEL_RANGE * 2 + 1;                // Number of sectors in one row or column
