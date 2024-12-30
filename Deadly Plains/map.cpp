@@ -103,7 +103,6 @@ void Map::frame_update()
         else
         {
             entities.clear();
-            set_kill("YOU GAVE UP");
             return;
         }
     }
@@ -231,6 +230,10 @@ void Map::frame_update()
         }
     }
 
+    // Data save to file
+    if (frame % SAVING_PERIOD == 0) // including frame 0
+        save_all_data(score);
+
     // Frame end
     frame_display();
     frame++;
@@ -283,8 +286,9 @@ void Map::entity_move(int x, int y)
     if (dist_x < 0) dist_x *= -1;
     if (dist_y < 0) dist_y *= -1;
     
-    // Despawn egg entities if outside safe range
-    if (entity.was_egg_spawned() && (dist_x > DESPAWN_DISTANCE || dist_y > DESPAWN_DISTANCE)) {
+    // Despawn egg entities (and dried insects) if outside safe range
+    if ((entity.was_egg_spawned() || (entity.get_id() == C::INSECT && entity.get_score() == 0)) &&
+       (dist_x > DESPAWN_DISTANCE || dist_y > DESPAWN_DISTANCE)) {
         remove(x, y, true);
         return;
     }

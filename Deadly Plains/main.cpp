@@ -7,13 +7,13 @@
 #include "console.h"
 #include "menu.h"
 #include "main.h"
+#include "files.h"
 
 using namespace std;
 
 static int highscore = 0;
 static unsigned int last_seed = 0;
 static bool frame_could_be_delayed = false;
-static string kill_info = "";
 
 // Sets the console title to game version + additional debug info
 static void title_debug_info(string info)
@@ -55,16 +55,48 @@ void allow_frame_delay()
     frame_could_be_delayed = true;
 }
 
-// Sets the kill info
-void set_kill(string info)
+// Loads all game data from file
+void load_all_data()
 {
-    kill_info = info;
+    string read = read_from_file(L"mg_data.se3");
+    string str_highscore = "";
+    string str_last_seed = "";
+
+    int reading_mode = 0;
+    for (auto it = read.begin(); it != read.end(); ++it)
+    {
+        if (*it != ';')
+        {
+            if(reading_mode == 0)
+                str_highscore += *it;
+
+            if (reading_mode == 1)
+                str_last_seed += *it;
+        }
+        else reading_mode++;
+    }
+
+    highscore = int_parse_any_string(str_highscore.c_str());
+    last_seed = int_parse_any_string(str_last_seed.c_str());
+
+    if (highscore < 0)
+        highscore = 0;
+}
+
+// Saves all game data to file
+void save_all_data(int not_updated_score)
+{
+    int score = highscore > not_updated_score ? highscore : not_updated_score;
+    stringstream ss;
+    ss << score << ";" << last_seed;
+    save_to_file(L"mg_data.se3", ss.str());
 }
 
 // Starts gameplay with a given (or random when empty) seed
 static void play(unsigned int seed = 0)
 {
     Map* map = new Map(seed);
+    set_last_seed(map->get_seed());
     int next_frame_wait = 0;
     while (map->end() == -1)
     {
@@ -95,16 +127,9 @@ static void play(unsigned int seed = 0)
     }
     title_debug_info("");
     int got_score = map->end();
-    set_last_seed(map->get_seed());
     delete map;
 
-    if (kill_info == "") {
-        you_died_menu(got_score);
-    }
-    else {
-        you_died_menu(got_score, kill_info);
-        kill_info = "";
-    }
+    you_died_menu(got_score);
 }
 
 // Asks user for seed and starts gameplay
@@ -124,6 +149,7 @@ int main()
     title_debug_info("");
     std::ios::sync_with_stdio(false); // removes compatibility with printf() from C, be careful and only use cout!
     cursor_set_active(false);
+    load_all_data();
 
     // Main menu
     int ask_result;

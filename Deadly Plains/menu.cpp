@@ -1,9 +1,11 @@
 #include <iostream>
 #include <sstream>
+#include <conio.h>
 
 #include "console.h"
 #include "menu.h"
 #include "main.h"
+#include "difficulty.h"
 
 // Displays the menu header
 static void display_header(unsigned char info_flags = 0b001, int score = -1)
@@ -25,13 +27,16 @@ static void display_header(unsigned char info_flags = 0b001, int score = -1)
 
 	if ((info_flags >> 1) % 2 == 1 && get_last_seed() != 0)
 	{
-		cout << "  Recent seed: " << get_last_seed() << endl;
+		cout << "  Last used seed: " << get_last_seed() << endl;
 		written_anything_2 = true;
 	}
 
 	if (score != -1)
 	{
-		cout << "  Score: " << score << endl;
+		cout << "  Score: " << score;
+		if (score > get_highscore())
+			cout << " - New record!";
+		cout << endl;
 		written_anything_2 = true;
 	}
 
@@ -69,13 +74,18 @@ static string ask_for_text()
 	return string(text_var);
 }
 
-// Asks the user to press any key to continue
+// Asks the user to press ENTER to continue
 static void any_key_delay()
 {
-	cout << " Press any key to continue..." << endl;
-	cursor_set_active(true);
-	system("pause >nul");
-	cursor_set_active(false);
+	cout << " Press ENTER to continue..." << endl;
+	while (_kbhit()) {
+		_getch();
+	}
+	while (true) {
+		char c = _getch();
+		if (c == '\n') break;
+		if (c == '\r') break;
+	}
 }
 
 // ----------------------------------------------- //
@@ -92,11 +102,11 @@ int main_menu()
 		display_menu({
 			string(3, C::LINE_HORIZONTAL) + string(" MAIN MENU ") + string(3, C::LINE_HORIZONTAL),
 			"",
-			" 1. Play",
-			" 2. Set seed & play",
-			" 3. Instructions",
-			" 4. Known phases",
-			" 5. Quit",
+			" 1 - Play",
+			" 2 - Set seed & play",
+			" 3 - Instructions",
+			" 4 - Game phases",
+			" 5 - Quit",
 			"",
 		});
 
@@ -120,9 +130,11 @@ unsigned int seed_menu()
 			"",
 			" What seed do you want to use?",
 			"",
-			" - Enter any positive number (or text) as a seed.",
-			" - Enter 'recent' or '0' to use the recent seed.",
+			" - Enter any text as a seed. Text will be converted into a positive number.",
+			" - Enter 'recent' or '0' to use the last used seed.",
 			" - Enter 'back' or '-1' to return to the main menu.",
+			"",
+			" Type one of the options above.",
 			"",
 		});
 
@@ -136,14 +148,9 @@ unsigned int seed_menu()
 				continue;
 		}
 		if (out == "back" || out == "-1") return 0;
+		if (out == "") continue;
 
-		unsigned int build_seed = 0;
-		while (!out.empty())
-		{
-			build_seed *= 10;
-			build_seed += out[0] - '0';
-			out = out.substr(1);
-		}
+		unsigned int build_seed = int_parse_any_string(out.c_str());
 		if (build_seed == 0)
 			build_seed = 1;
 
@@ -158,9 +165,22 @@ void instructions_menu()
 	display_menu({
 		string(3, C::LINE_HORIZONTAL) + string(" INSTRUCTIONS ") + string(3, C::LINE_HORIZONTAL),
 		"",
-		" - The tutorial is not ready yet.",
-		" - Come back in January.",
-		" - The horse will be with you!",
+		" 1. Start gameplay from the main menu. You can play",
+		"    with a random seed (option 1) or a set seed (option 2).",
+		"",
+		" 2. Move around using arrows, WASD or IJKL keys.",
+		"",
+		" 3. Hold space and use movement keys to shoot bullets.",
+		"    You can't move while shooting.",
+		"",
+		" 4. Kill enemies and avoid their attacks.",
+		"    Each killed enemy will add a few points to your score.",
+		"",
+		" 5. The higher your score, the harder gameplay becomes.",
+		"    Check all phases you've discovered in the main menu (option 4).",
+		"",
+		" 6. Achieve the highest score possible before you die.",
+		"    Good luck! :)",
 		"",
 	});
 	any_key_delay();
@@ -171,19 +191,35 @@ void phases_menu()
 	clear_screen();
 	display_header(0b101);
 	display_menu({
-		string(3, C::LINE_HORIZONTAL) + string(" KNOWN PHASES ") + string(3, C::LINE_HORIZONTAL),
-		"",
-		" 1 - BLAH BLAH",
-		" 2 - OTHER DIFF",
-		" 3 - THE HORSES",
-		" 4 - ???",
-		"",
+		" |----|------------------|-------------|",
+		" | ID |    GAME PHASE    |    SCORE    |",
+		" |----|------------------|-------------|",
 		});
+
+	for (int i = 1; i <= 15; i++)
+	{
+		cout << "  | ";
+		if (i < 10) cout << "0" << i;
+		else cout << i;
+		cout << " | ";
+		cout.width(16);
+		set_color(COLOR::RED);
+		if (i > 7) set_color(COLOR::DARK_RED);
+		cout << "TRAINING AREA";
+		set_color();
+		cout << " | 0000 - 0000 |";
+		cout << endl;
+	}
+	cout << "  |----|------------------|-------------|" << endl;
+	cout << endl;
+
 	any_key_delay();
 }
 
 int pause_menu(int score)
 {
+	save_all_data(score);
+
 	while (true)
 	{
 		clear_screen();
@@ -191,8 +227,8 @@ int pause_menu(int score)
 		display_menu({
 			string(3, C::LINE_HORIZONTAL) + string(" PAUSE ") + string(3, C::LINE_HORIZONTAL),
 			"",
-			" 1. Resume game",
-			" 2. Give up",
+			" 1 - Resume game",
+			" 2 - End the game",
 			"",
 			});
 
@@ -202,11 +238,13 @@ int pause_menu(int score)
 	}
 }
 
-void you_died_menu(int score, string info)
+void you_died_menu(int score)
 {
+	save_all_data(score);
+
 	stringstream ss;
 	ss << " Score: " << score;
-	info = string(3, C::LINE_HORIZONTAL) + string(" ") + info + string(" ") + string(3, C::LINE_HORIZONTAL);
+	string info = string(3, C::LINE_HORIZONTAL) + string(" GAME OVER ") + string(3, C::LINE_HORIZONTAL);
 
 	clear_screen();
 	if (score <= get_highscore())
@@ -221,12 +259,12 @@ void you_died_menu(int score, string info)
 	}
 	else
 	{
+		ss << " - New record!";
 		set_highscore(score);
 		display_header(0b111);
 		display_menu({
 			info,
 			"",
-			" New record!",
 			ss.str(),
 			"",
 		});
