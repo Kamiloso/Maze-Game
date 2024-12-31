@@ -37,6 +37,7 @@ private:
     unsigned int public_seed = 0;
     int frame = 0;
     int score = 0;
+    int debug_phase = -1;
 
     // Private methods
     void entity_move(int x, int y);
@@ -45,7 +46,7 @@ private:
 public:
 
     // Constructor & destructor
-    Map(unsigned int seed = 0);
+    Map(unsigned int seed = 0, int _debug_phase = -1);
     ~Map();
 
     // Public methods

@@ -65,7 +65,7 @@ void Tile::initialize_tile_values()
 
 	case C::INSECTOR:
 		health = 5;
-		reward_score = 18;
+		reward_score = 15;
 		break;
 
 	case C::INSECT:
@@ -551,10 +551,11 @@ void Tile::spawner_activate(Map* map, mt19937& ms_twister, bool mag, int x, int 
         int x2 = candidate_coords[i].x;
         int y2 = candidate_coords[i].y;
 
+        // Spawner entities will be treated as egg entities (will despawn and will prevent eggs from appearing)
         if (rand >= 0 && rand < 500)
-            map->spawn(x2, y2, C::MONSTER, true, mag);
+            map->spawn(x2, y2, C::MONSTER, true, mag).set_egg_spawned();
         if (rand >= 500 && rand < 1000)
-            map->spawn(x2, y2, C::INSECT, true, mag);
+            map->spawn(x2, y2, C::INSECT, true, mag).set_egg_spawned();
 
         left_amount--;
         if (left_amount <= 0)

@@ -33,7 +33,7 @@ static void display_header(unsigned char info_flags = 0b001, int score = -1)
 
 	if (score != -1)
 	{
-		cout << "  Score: " << score;
+		cout << "  Score: " << Difficulty::score_to_str(score);
 		if (score > get_highscore())
 			cout << " - New record!";
 		cout << endl;
@@ -116,6 +116,15 @@ int main_menu()
 		if (out == "3") return 3;
 		if (out == "4") return 4;
 		if (out == "5") return 5;
+
+		// Here CHEAT CODES can be inserted
+		for (int i = 0; i <= 15; i++)
+		{
+			stringstream ss;
+			ss << "test-phase-" << get_difficulty_by_id(i).get_id_str();
+			if (out == ss.str())
+				return -i;
+		}
 	}
 }
 
@@ -123,6 +132,12 @@ unsigned int seed_menu()
 {
 	while (true)
 	{
+		stringstream ss;
+		ss << get_last_seed();
+		string str_last_seed = ss.str();
+		if (str_last_seed == "0")
+			str_last_seed = "only if you've played before";
+
 		clear_screen();
 		display_header(0b011);
 		display_menu({
@@ -130,9 +145,10 @@ unsigned int seed_menu()
 			"",
 			" What seed do you want to use?",
 			"",
-			" - Enter any text as a seed. Text will be converted into a positive number.",
-			" - Enter 'recent' or '0' to use the last used seed.",
-			" - Enter 'back' or '-1' to return to the main menu.",
+			" - Enter any 32-bit positive number as a seed e.g. '12345'.",
+			" - Enter any text to convert it into a seed e.g 'maze game'.",
+			" - Enter '0' or 'recent' to use the last used seed (" + str_last_seed + ").",
+			" - Enter '-1' or 'back' to return to the main menu.",
 			"",
 			" Type one of the options above.",
 			"",
@@ -228,6 +244,7 @@ void phases_menu()
 	insert_text("GAME PHASE", { 10,1 }, 10);
 	insert_text("SCORE", { 29,1 }, 5);
 	fill_characters({ '-' }, { 31,3 }, { 31,17 });
+	bool first_unknown = true;
 	for (int i = 1; i <= 15; i++)
 	{
 		Difficulty difficulty = get_difficulty_by_id(i);
@@ -242,9 +259,15 @@ void phases_menu()
 		}
 		else // Unknown difficulty
 		{
-			name = { "????????????????", COLOR::DARK_GRAY };
+			name = { string(16, '?'), COLOR::DARK_GRAY };
 			str_score_min = "?";
 			str_score_max = "?";
+
+			if (first_unknown)
+			{
+				str_score_min = Difficulty::score_to_str(difficulty.get_score_min());
+				first_unknown = false;
+			}
 		}
 
 		// ID numbers
@@ -289,7 +312,7 @@ void you_died_menu(int score)
 	save_all_data(score);
 
 	stringstream ss;
-	ss << " Score: " << score;
+	ss << " Score: " << Difficulty::score_to_str(score);
 	string info = string(3, C::LINE_HORIZONTAL) + string(" GAME OVER ") + string(3, C::LINE_HORIZONTAL);
 
 	clear_screen();

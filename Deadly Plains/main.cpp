@@ -97,9 +97,9 @@ void save_all_data(int not_updated_score)
 }
 
 // Starts gameplay with a given (or random when empty) seed
-static void play(unsigned int seed = 0)
+static void play(unsigned int seed = 0, int _debug_phase = -1)
 {
-    Map* map = new Map(seed);
+    Map* map = new Map(seed, _debug_phase);
     set_last_seed(map->get_seed());
     int next_frame_wait = 0;
     while (map->end() == -1)
@@ -166,6 +166,9 @@ int main()
             case 3: instructions_menu(); break;
             case 4: phases_menu(); break;
         }
+        if (ask_result <= 0)
+            play(0, -ask_result);
+
     } while (ask_result != 5);
 
     // Program ending

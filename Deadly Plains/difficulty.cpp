@@ -22,9 +22,10 @@ void Difficulty::configure_accessibility(int _score_min, int _score_max)
 }
 
 // Configures all spawning rules
-void Difficulty::configure_spawning(int _max_entities, int _spawn_min, int _spawn_max, vector<SpawnRule> _spawn_rules)
+void Difficulty::configure_spawning(int _max_entities, int _spawn_chance, int _spawn_min, int _spawn_max, vector<SpawnRule> _spawn_rules)
 {
 	max_entities = _max_entities;
+	spawn_chance = _spawn_chance;
 	spawn_min = _spawn_min;
 	spawn_max = _spawn_max;
 	spawn_rules = _spawn_rules;
@@ -38,13 +39,13 @@ void Difficulty::configure_degradation(int _max_blocks, int _terrain_deg_num)
 }
 
 // ID getter
-int Difficulty::get_id()
+int Difficulty::get_id() const
 {
 	return id;
 }
 
 // ID getter in string form
-string Difficulty::get_id_str()
+string Difficulty::get_id_str() const
 {
 	stringstream ss;
 	if (id < 10) ss << "0" << id;
@@ -53,31 +54,31 @@ string Difficulty::get_id_str()
 }
 
 // Name getter
-ColoredString Difficulty::get_name()
+ColoredString Difficulty::get_name() const
 {
 	return name;
 }
 
 // Checks if difficulty is active with the given score
-bool Difficulty::is_active(int score)
+bool Difficulty::is_active(int score) const
 {
 	return (score >= score_min && (score <= score_max || score_to_str(score_max) == "INF"));
 }
 
 // Score min getter
-int Difficulty::get_score_min()
+int Difficulty::get_score_min() const
 {
 	return score_min;
 }
 
 // Score max getter
-int Difficulty::get_score_max()
+int Difficulty::get_score_max() const
 {
 	return score_max;
 }
 
 // Deducts score_min of the next difficulty based on score_max of the current
-int Difficulty::get_next_score()
+int Difficulty::get_next_score() const
 {
 	if (score_to_str(score_max) != "INF")
 		return score_max + 1;
@@ -86,13 +87,17 @@ int Difficulty::get_next_score()
 }
 
 // Returns list of entities to spawn
-vector<SpawnRule> Difficulty::pick_entities(int current_entities, mt19937& ms_twister)
+vector<SpawnRule> Difficulty::pick_entities(int current_entities, mt19937& ms_twister) const
 {
 	// Create return vector
 	auto return_vector = vector<SpawnRule>();
 
 	// Return nothing if simulation space full
 	if (current_entities >= max_entities)
+		return return_vector;
+
+	// Spawn chance decides whether to spawn entities
+	if (!(ms_twister() % 1000 < spawn_chance))
 		return return_vector;
 
 	// Calculate weight sum
@@ -129,13 +134,13 @@ vector<SpawnRule> Difficulty::pick_entities(int current_entities, mt19937& ms_tw
 }
 
 // Max blocks getter
-int Difficulty::get_max_blocks()
+int Difficulty::get_max_blocks() const
 {
 	return max_blocks;
 }
 
 // Terrain deg num getter
-int Difficulty::get_terrain_deg_num()
+int Difficulty::get_terrain_deg_num() const
 {
 	return terrain_deg_num;
 }
@@ -149,6 +154,7 @@ string Difficulty::score_to_str(int score)
 		return "INF";
 
 	stringstream ss;
-	ss << score;
+	if (score >= 0) ss << score;
+	else ss << "" << score - std::numeric_limits<int>::min() << " ~";
 	return ss.str();
 }

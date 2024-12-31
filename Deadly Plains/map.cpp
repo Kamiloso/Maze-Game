@@ -46,7 +46,7 @@ static bool activates_on_kill(char c)
 }
 
 // Map constructor
-Map::Map(unsigned int seed)
+Map::Map(unsigned int seed, int _debug_phase)
 {
     if (seed == 0)
         public_seed = std::random_device{}();
@@ -66,6 +66,12 @@ Map::Map(unsigned int seed)
     }
     
     generate(this, ms_twister);
+
+    if (_debug_phase >= 0 && _debug_phase <= 15)
+    {
+        debug_phase = _debug_phase;
+        score = std::numeric_limits<int>::min();
+    }
 }
 
 // Map destructor
@@ -175,7 +181,11 @@ void Map::frame_update()
     delayed_kills.clear();
 
     // Spawning
-    current_difficulty = get_difficulty(score);
+    if (debug_phase == -1)
+        current_difficulty = get_difficulty(score);
+    else
+        current_difficulty = get_difficulty_by_id(debug_phase);
+
     if (frame % 32 == 0)
         spawning.frame_spawn(entities[0], current_difficulty);
 
@@ -192,7 +202,29 @@ void Map::frame_update()
                     blocks_detected.push_back({ x, y });
 
                 else if (get_tile(x, y) == C::NUMBER)
-                    numbers_detected.push_back({ x, y });
+                {
+                    bool will_be = false;
+                    if (get_tile_ref(x, y).has_wall_flag())
+                    {
+                        // Check if is part of an intact monster room (don't break such walls)
+                        int wall_nums_nearby = 0;
+                        for (int x1 = x - 2; x1 <= x + 2; x1++)
+                            for (int y1 = y - 2; y1 <= y + 2; y1++)
+                            {
+                                Tile& numb = get_tile_ref(x1, y1);
+                                if (numb.get_id() == C::NUMBER && numb.has_wall_flag())
+                                    wall_nums_nearby++;
+                            }
+
+                        // Allow degradation of partially broken wall
+                        if (wall_nums_nearby < 3)
+                            will_be = true;
+                    }
+                    else will_be = true;
+
+                    if(will_be)
+                        numbers_detected.push_back({ x, y });
+                }
             }
 
         // Block degradation
@@ -249,7 +281,7 @@ void Map::frame_display()
     disp_data.difficulty_id = current_difficulty.get_id_str();
     disp_data.difficulty_color = current_difficulty.get_name().color;
     disp_data.score = score;
-    disp_data.next_score = current_difficulty.get_next_score();
+    disp_data.next_score = debug_phase == -1 ? current_difficulty.get_next_score() : -1;
     disp_data.health = get_tile_ref(entities[0].x, entities[0].y).get_health();
     display(this, disp_data);
 }
@@ -395,7 +427,7 @@ ConsoleChar Map::get_tile_display(int x, int y) const
 
         if (tile.is_magical())
         {
-            if(ch != C::BLOCK)
+            if(ch != C::BLOCK && ch != C::INSECT_DRIED)
                 return { chr, COLOR::MAGENTA };
             else
                 return { chr, COLOR::DARK_MAGENTA };
@@ -418,9 +450,11 @@ ConsoleChar Map::get_tile_display(int x, int y) const
             ch == C::SNIPER ||
             ch == C::INSECTOR ||
             ch == C::INSECT ||
-            ch == C::INSECT_DRIED ||
             ch == C::SPAWNER)
             return { chr, COLOR::RED };
+
+        if(ch == C::INSECT_DRIED)
+            return { chr, COLOR::DARK_RED };
 
         return { chr, COLOR::LIGHT_GRAY };
     }
