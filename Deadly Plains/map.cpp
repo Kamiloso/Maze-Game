@@ -283,6 +283,22 @@ void Map::frame_display()
     disp_data.score = score;
     disp_data.next_score = debug_phase == -1 ? current_difficulty.get_next_score() : -1;
     disp_data.health = get_tile_ref(entities[0].x, entities[0].y).get_health();
+    
+    // Checking if is allowed to see phase name
+    if (debug_phase != -1)
+    {
+        int dif_id = current_difficulty.get_id();
+        int max_known = get_difficulty(get_highscore()).get_id();
+        if (!discovered_phase_01())
+            max_known = 0;
+
+        if (dif_id > max_known)
+        {
+            disp_data.difficulty_name = "UNKNOWN NAME";
+            disp_data.difficulty_color = COLOR::DARK_GRAY;
+        }
+    }
+
     display(this, disp_data);
 }
 
@@ -412,7 +428,7 @@ ConsoleChar Map::get_tile_display(int x, int y) const
         if (ch == C::BULLET)
         {
             if (tile.is_magical())
-                return { chr, COLOR::MAGENTA };
+                return { chr, COLOR::DARK_MAGENTA };
             else if (tile.was_shot_by_player())
                 return { chr, COLOR::DARK_GREEN };
             else

@@ -132,7 +132,7 @@ vector<Difficulty> get_difficulties()
 	D->configure_degradation(3000, 300);
 
 	D = &arr[7];
-	D->set_name({ "THE CAPITAL I", COLOR::RED });
+	D->set_name({ "THE CAPITAL I", COLOR::DARK_RED });
 	D->configure_accessibility(550, 749); // 200
 	D->configure_spawning(8, 700, 1, 3, {
 		{ C::INSECT, 4 },
@@ -142,7 +142,7 @@ vector<Difficulty> get_difficulties()
 	D->configure_degradation(2500, 220);
 
 	D = &arr[8];
-	D->set_name({ "BULLET STORM", COLOR::RED });
+	D->set_name({ "BULLET STORM", COLOR::DARK_RED });
 	D->configure_accessibility(750, 899); // 150
 	D->configure_spawning(9, 800, 2, 3, {
 		{ C::INSECT, 2 },

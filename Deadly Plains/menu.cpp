@@ -120,10 +120,21 @@ int main_menu()
 		// Here CHEAT CODES can be inserted
 		for (int i = 0; i <= 15; i++)
 		{
-			stringstream ss;
-			ss << "test-phase-" << get_difficulty_by_id(i).get_id_str();
-			if (out == ss.str())
-				return -i;
+			stringstream ss1;
+			ss1 << "practice-" << get_difficulty_by_id(i).get_id_str();
+			if (out == ss1.str())
+			{
+				set_next_debug_phase(i);
+				return -1;
+			}
+
+			stringstream ss2;
+			ss2 << "recent-seed-practice-" << get_difficulty_by_id(i).get_id_str();
+			if (out == ss2.str())
+			{
+				set_next_debug_phase(i);
+				return -2;
+			}
 		}
 	}
 }
@@ -198,6 +209,9 @@ void instructions_menu()
 		" 6. Achieve the highest score possible before you die.",
 		"    Good luck! :)",
 		"",
+		" TIP: To practice a specific phase, type 'practice-00' or 'recent-seed-practice-00'",
+		"      in the main menu. You can choose any number between 00 and 15.",
+		"",
 	});
 	any_key_delay();
 }
@@ -251,7 +265,7 @@ void phases_menu()
 
 		ColoredString name;
 		string str_score_min, str_score_max;
-		if (get_highscore() >= difficulty.get_score_min() && get_last_seed() != 0) // Known difficulty
+		if (get_highscore() >= difficulty.get_score_min() && discovered_phase_01()) // Known difficulty
 		{
 			name = difficulty.get_name();
 			str_score_min = Difficulty::score_to_str(difficulty.get_score_min());
