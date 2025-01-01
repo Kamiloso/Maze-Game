@@ -153,9 +153,9 @@ vector<Difficulty> get_difficulties()
 	D = &arr[9];
 	D->set_name({ "MONSTER ENERGY", COLOR::MAGENTA });
 	D->configure_accessibility(900, 1149); // 250
-	D->configure_spawning(9, 800, 1, 3, {
-		{ C::INSECT, 1 },
-		{ C::INSECT, 2, true },
+	D->configure_spawning(9, 700, 1, 3, {
+		{ C::INSECT, 2 },
+		{ C::INSECT, 1, true },
 		{ C::MONSTER, 1 },
 		{ C::MONSTER, 1, true },
 		{ C::SNIPER, 1 },

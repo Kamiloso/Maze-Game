@@ -65,7 +65,7 @@ void Tile::initialize_tile_values()
 
 	case C::INSECTOR:
 		health = 5;
-		reward_score = 15;
+		reward_score = 18;
 		break;
 
 	case C::INSECT:
