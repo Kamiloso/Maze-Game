@@ -130,7 +130,6 @@ static void play(unsigned int seed = 0)
     Map* map = new Map(seed, debug_phase);
     set_last_seed(map->get_seed());
     if (debug_phase == -1) playing_phase_01();
-    debug_phase = -1;
 
     int next_frame_wait = 0;
     while (map->end() == -1)
@@ -164,7 +163,8 @@ static void play(unsigned int seed = 0)
     int got_score = map->end();
     delete map;
 
-    you_died_menu(got_score);
+    you_died_menu(got_score, debug_phase);
+    debug_phase = -1;
 }
 
 // Asks user for seed and starts gameplay

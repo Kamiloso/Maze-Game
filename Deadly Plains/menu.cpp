@@ -321,36 +321,51 @@ int pause_menu(int score)
 	}
 }
 
-void you_died_menu(int score)
+void you_died_menu(int score, int debug_phase)
 {
 	save_all_data(score);
 
-	stringstream ss;
-	ss << " Score: " << Difficulty::score_to_str(score);
-	string info = string(3, C::LINE_HORIZONTAL) + string(" GAME OVER ") + string(3, C::LINE_HORIZONTAL);
+	string add_str_after_score = "";
 
 	clear_screen();
 	if (score <= get_highscore())
 	{
 		display_header(0b111);
-		display_menu({
-			info,
-			"",
-			ss.str(),
-			"",
-		});
 	}
 	else
 	{
-		ss << " - New record!";
+		add_str_after_score = " - New record!";
 		set_highscore(score);
 		display_header(0b111);
-		display_menu({
-			info,
-			"",
-			ss.str(),
-			"",
-		});
 	}
+
+	Difficulty dif;
+	if (debug_phase >= 0 && debug_phase <= 15)
+		dif = get_difficulty_by_id(debug_phase);
+	else
+		dif = get_difficulty(score);
+
+	ColoredString dif_name;
+	int dif_id = dif.get_id();
+	int dif_id_max = get_difficulty(get_highscore()).get_id();
+	if (!discovered_phase_01())
+		dif_id_max = 0;
+
+	if (dif_id <= dif_id_max)
+		dif_name = dif.get_name();
+	else
+		dif_name = { "UNKNOWN NAME", COLOR::DARK_GRAY };
+
+	cout << " " << string(3, C::LINE_HORIZONTAL) + string(" GAME OVER ") + string(3, C::LINE_HORIZONTAL) << endl;
+	cout << endl;
+	
+	cout << "  Phase " << dif.get_id_str() << ": ";
+	set_color(dif_name.color);
+	cout << dif_name.str << endl;
+	set_color();
+	
+	cout << "  Score: " << Difficulty::score_to_str(score) << add_str_after_score << endl;
+	cout << endl;
+
 	any_key_delay();
 }

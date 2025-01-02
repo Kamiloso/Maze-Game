@@ -11,4 +11,4 @@ unsigned int seed_menu();
 void instructions_menu();
 void phases_menu();
 int pause_menu(int score);
-void you_died_menu(int score);
+void you_died_menu(int score, int debug_phase);
