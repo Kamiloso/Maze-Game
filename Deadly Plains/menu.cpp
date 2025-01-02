@@ -210,7 +210,7 @@ void instructions_menu()
 		"    Good luck! :)",
 		"",
 		" TIP: To practice a specific phase, type 'practice-00' or 'recent-seed-practice-00'",
-		"      in the main menu. You can choose any number between 00 and 15.",
+		"      in the main menu. Replace '00' with any number between 00 and 15.",
 		"",
 	});
 	any_key_delay();
