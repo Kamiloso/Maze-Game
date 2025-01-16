@@ -63,7 +63,7 @@ static Coords pathfind_to_map_convert(Coords player, Coords entity)
 }
 
 // Selects smell of a tile based on its type and smell array
-static int find_smell(vector<EntitySmell> smells, char tile)
+static int find_smell(vector<EntitySmell>& smells, char tile)
 {
 	if (can_see_through(tile))
 		return 0;
