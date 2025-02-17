@@ -1,5 +1,5 @@
 # Maze-Game
- It's a console game written in C++ for Windows, where you explore the procedurally generated maze, fight enemies and try to achieve the highest score possible.
+ A console game written in C++ for Windows, where you explore the procedurally generated maze, fight enemies and try to achieve the highest score possible.
 
  | ![Maze-Game-Preview](https://raw.githubusercontent.com/Kamiloso/Kamiloso/main/mazegame.png) |
  | ------------------------------------------------------------------------------------------- |
