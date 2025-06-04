@@ -8,7 +8,7 @@
 
 ### Prerequisites
 - Visual Studio 2022 (Platform Toolset v143)  
-- C++20
+- C++14
 
 ### Steps
 - Download project as a `.zip` file.
